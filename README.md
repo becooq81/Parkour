@@ -1,6 +1,7 @@
-# Parkour
-Developing a keyboard in Flutter as part of project Parkour. 
-Parkour is a project committed to help digital device usability for Parkinson's disease patients who experience difficulty with motor movements. 
+# Keyboard
 
-# Implementation
-While relying on FlutterFlow for the general frame of pages, I implemented custom widgets for the keyboards. 
+A new Flutter project.
+
+## Getting Started
+
+FlutterFlow projects are built to run on the Flutter _stable_ release.
