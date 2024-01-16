@@ -1,27 +1,26 @@
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/custom_code/widgets/index.dart' as custom_widgets;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'keyboard_model.dart';
-export 'keyboard_model.dart';
+import 'blank_model.dart';
+export 'blank_model.dart';
 
-class KeyboardWidget extends StatefulWidget {
-  const KeyboardWidget({super.key});
+class BlankWidget extends StatefulWidget {
+  const BlankWidget({super.key});
 
   @override
-  _KeyboardWidgetState createState() => _KeyboardWidgetState();
+  _BlankWidgetState createState() => _BlankWidgetState();
 }
 
-class _KeyboardWidgetState extends State<KeyboardWidget> {
-  late KeyboardModel _model;
+class _BlankWidgetState extends State<BlankWidget> {
+  late BlankModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
-    _model = createModel(context, () => KeyboardModel());
+    _model = createModel(context, () => BlankModel());
 
     WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
   }
@@ -66,23 +65,11 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
           centerTitle: false,
           elevation: 2.0,
         ),
-        body: SafeArea(
+        body: const SafeArea(
           top: true,
           child: Column(
             mainAxisSize: MainAxisSize.max,
-            children: [
-              Align(
-                alignment: const AlignmentDirectional(0.0, 0.0),
-                child: SizedBox(
-                  width: MediaQuery.sizeOf(context).width * 1.0,
-                  height: MediaQuery.sizeOf(context).height * 0.8,
-                  child: custom_widgets.CustomKeyboardCopy(
-                    width: MediaQuery.sizeOf(context).width * 1.0,
-                    height: MediaQuery.sizeOf(context).height * 0.8,
-                  ),
-                ),
-              ),
-            ],
+            children: [],
           ),
         ),
       ),
