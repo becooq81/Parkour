@@ -111,8 +111,8 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     final String csv = const ListToCsvConverter().convert(csvData);
 
     // Updated path to the project directory
-    final Directory projectDirectory = Directory.current;
-    final String filePath = '${projectDirectory.path}/coordinates.csv';
+    final Directory appDocDir = await getApplicationDocumentsDirectory();
+    final String filePath = '${appDocDir.path}/coordinates.csv';
 
     final File file = File(filePath);
     await file.writeAsString(csv);
