@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '/index.dart';
+import '/main.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 
 export 'package:go_router/go_router.dart';
@@ -29,17 +30,25 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
       initialLocation: '/',
       debugLogDiagnostics: true,
       refreshListenable: appStateNotifier,
-      errorBuilder: (context, state) => const KeyboardWidget(),
+      errorBuilder: (context, state) => const NavBarPage(),
       routes: [
         FFRoute(
           name: '_initialize',
           path: '/',
-          builder: (context, _) => const KeyboardWidget(),
+          builder: (context, _) => const NavBarPage(),
         ),
         FFRoute(
           name: 'Keyboard',
           path: '/keyboard',
-          builder: (context, params) => const KeyboardWidget(),
+          builder: (context, params) => params.isEmpty
+              ? const NavBarPage(initialPage: 'Keyboard')
+              : const KeyboardWidget(),
+        ),
+        FFRoute(
+          name: 'Blank',
+          path: '/blank',
+          builder: (context, params) =>
+              params.isEmpty ? const NavBarPage(initialPage: 'Blank') : const BlankWidget(),
         )
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );

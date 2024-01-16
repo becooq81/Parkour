@@ -50,22 +50,6 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     super.dispose();
   }
 
-  /*void updateTextAndScroll(String newText) {
-    setState(() {
-      text = newText;
-      textController.text = text;
-      if (textFieldScrollController.hasClients) {
-        final scrollPosition =
-            textFieldScrollController.position.maxScrollExtent;
-        textFieldScrollController.animateTo(
-          scrollPosition,
-          duration: Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-  */
   void updateTextAndScroll(String newText) {
     setState(() {
       text = newText;
@@ -89,23 +73,7 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     });
   }
 
-  /* 
-  void exportCoordinatesToCSV() async {
-    final coordinatesList = coordinates.map((e) => [e.dx, e.dy]).toList();
-    final List<List<dynamic>> csvData = [
-      ['X', 'Y'],
-      ...coordinatesList,
-    ];
-    final String csv = const ListToCsvConverter().convert(csvData);
-    final String directoryPath =
-        (await getApplicationDocumentsDirectory()).path;
-    final String filePath = '$directoryPath/coordinates.csv';
-    File file = File(filePath);
-    await file.writeAsString(csv);
-// Notify the user or perform other actions as needed
-    print('CSV file exported to: $filePath');
-  }
-  */
+  /*
   void exportCoordinatesToCSV() async {
     // Request necessary permissions for external storage (Android)
     if (Platform.isAndroid) {
@@ -128,6 +96,30 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     // Check if the file exists and notify the user
     if (await file.exists()) {
       Share.shareFiles([filePath], text: 'Your Coordinates CSV File');
+    } else {
+      print('Failed to create CSV file.');
+      // Optionally, show an error message to the user
+    }
+  }
+  */
+  void exportCoordinatesToCSV() async {
+    final coordinatesList = coordinates.map((e) => [e.dx, e.dy]).toList();
+    final List<List<dynamic>> csvData = [
+      ['X', 'Y'],
+      ...coordinatesList,
+    ];
+    final String csv = const ListToCsvConverter().convert(csvData);
+
+    // Updated path to the project directory
+    final Directory projectDirectory = Directory.current;
+    final String filePath = '${projectDirectory.path}/coordinates.csv';
+
+    final File file = File(filePath);
+    await file.writeAsString(csv);
+
+    // Check if the file exists and notify the user
+    if (await file.exists()) {
+      print('CSV file exported to: $filePath');
     } else {
       print('Failed to create CSV file.');
       // Optionally, show an error message to the user
@@ -189,11 +181,18 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
         centerOfKeyboard.dy - globalPosition.dy);
   }
 
+  double get keyHeight => isKeyboardVisible
+      ? (widget.height ?? MediaQuery.of(context).size.height) *
+          0.4 /
+          keys.length
+      : 0;
+
   Widget buildKey(String key) {
     return Expanded(
       child: GestureDetector(
         onPanDown: (details) => onKeyTap(key, details),
         child: Container(
+          height: keyHeight, // Set the height of the key
           alignment: Alignment.center,
           margin: EdgeInsets.all(2),
           decoration: BoxDecoration(
@@ -217,11 +216,10 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final double bottomMargin = 30;
+    final double screenHeight =
+        widget.height?.toDouble() ?? MediaQuery.of(context).size.height;
     final double keyboardHeight = isKeyboardVisible
-        ? (screenHeight * 0.3) + bottomMargin
+        ? (screenHeight * 0.4)
         : 0; // Keyboard occupies 40% of screen
 
     final textFieldHeight = screenHeight -
@@ -272,10 +270,9 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
         // Keyboard
         if (isKeyboardVisible)
           SizedBox(
-              height: keyboardHeight - bottomMargin,
+              height: keyboardHeight,
               width: double.infinity,
               child: Container(
-                margin: EdgeInsets.only(bottom: bottomMargin),
                 child: ListView.builder(
                   controller: scrollController,
                   itemCount: keys.length,
