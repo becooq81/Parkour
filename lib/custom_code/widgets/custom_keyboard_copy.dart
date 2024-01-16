@@ -219,7 +219,7 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final double bottomMargin = 35;
+    final double bottomMargin = 30;
     final double keyboardHeight = isKeyboardVisible
         ? (screenHeight * 0.3) + bottomMargin
         : 0; // Keyboard occupies 40% of screen
