@@ -219,7 +219,7 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final bottomMargin = screenHeight * 0.04;
+    final double bottomMargin = 35;
     final double keyboardHeight = isKeyboardVisible
         ? (screenHeight * 0.3) + bottomMargin
         : 0; // Keyboard occupies 40% of screen
@@ -233,7 +233,7 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
         // Text Field Container
         Container(
           height: textFieldHeight,
-          width: screenWidth,
+          width: double.infinity,
           padding: const EdgeInsets.all(8.0),
           child: SingleChildScrollView(
             controller: textFieldScrollController,
@@ -273,7 +273,7 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
         if (isKeyboardVisible)
           SizedBox(
               height: keyboardHeight - bottomMargin,
-              width: screenWidth,
+              width: double.infinity,
               child: Container(
                 margin: EdgeInsets.only(bottom: bottomMargin),
                 child: ListView.builder(
