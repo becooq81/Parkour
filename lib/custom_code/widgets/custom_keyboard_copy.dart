@@ -8,13 +8,12 @@ import 'package:flutter/material.dart';
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:share/share.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:csv/csv.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
-
-// Other imports...
 
 class CustomKeyboardCopy extends StatefulWidget {
   const CustomKeyboardCopy(
@@ -22,7 +21,6 @@ class CustomKeyboardCopy extends StatefulWidget {
       : super(key: key);
   final double? height;
   final double? width;
-
   @override
   _CustomKeyboardState createState() => _CustomKeyboardState();
 }
@@ -52,11 +50,10 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     super.dispose();
   }
 
-  void updateTextAndScroll(String newText) {
+  /*void updateTextAndScroll(String newText) {
     setState(() {
       text = newText;
       textController.text = text;
-
       if (textFieldScrollController.hasClients) {
         final scrollPosition =
             textFieldScrollController.position.maxScrollExtent;
@@ -65,6 +62,21 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
           duration: Duration(milliseconds: 200),
           curve: Curves.easeOut,
         );
+      }
+    });
+  }
+  */
+  void updateTextAndScroll(String newText) {
+    setState(() {
+      text = newText;
+      textController.text = text;
+    });
+
+    // Schedule a callback for the end of this frame to scroll to the bottom
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (textFieldScrollController.hasClients) {
+        textFieldScrollController
+            .jumpTo(textFieldScrollController.position.maxScrollExtent);
       }
     });
   }
@@ -88,10 +100,8 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     final String directoryPath =
         (await getApplicationDocumentsDirectory()).path;
     final String filePath = '$directoryPath/coordinates.csv';
-
     File file = File(filePath);
     await file.writeAsString(csv);
-
 // Notify the user or perform other actions as needed
     print('CSV file exported to: $filePath');
   }
@@ -104,25 +114,20 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
         await Permission.storage.request();
       }
     }
-
     final coordinatesList = coordinates.map((e) => [e.dx, e.dy]).toList();
     final List<List<dynamic>> csvData = [
       ['X', 'Y'],
       ...coordinatesList,
     ];
     final String csv = const ListToCsvConverter().convert(csvData);
-
     // Get the appropriate directory
     final Directory directory = await getApplicationDocumentsDirectory();
     final String filePath = '${directory.path}/coordinates.csv';
-
     final File file = File(filePath);
     await file.writeAsString(csv);
-
     // Check if the file exists and notify the user
     if (await file.exists()) {
-      print('CSV file created at: $filePath');
-      // Optionally, show a success message to the user
+      Share.shareFiles([filePath], text: 'Your Coordinates CSV File');
     } else {
       print('Failed to create CSV file.');
       // Optionally, show an error message to the user
@@ -162,7 +167,6 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
           'coordinates': coords.map((e) => {'x': e.dx, 'y': e.dy}).toList()
         }),
       );
-
       if (response.statusCode == 200) {
         print("Coordinates sent successfully: ${response.body}");
       } else {
@@ -213,66 +217,77 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final keyboardHeight = screenHeight * 0.5; // Adjust this fraction as needed
-    final textFieldHeight =
-        screenHeight * 0.25; // Set a fixed height for the text field
+    final screenHeight = MediaQuery.of(context).size.height;
+    final double bottomMargin = 30;
+    final double keyboardHeight = isKeyboardVisible
+        ? (screenHeight * 0.3) + bottomMargin
+        : 0; // Keyboard occupies 40% of screen
+
+    final textFieldHeight = screenHeight -
+        keyboardHeight -
+        48; // 48 is the height of the copy button
 
     return Column(
-      mainAxisAlignment: MainAxisAlignment.end, // Align content to the bottom
       children: [
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    controller: textFieldScrollController,
-                    child: TextField(
-                      controller: textController,
-                      maxLines: null,
-                      readOnly: true,
-                      onTap: () {
-                        setState(() {
-                          isKeyboardVisible = true;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Input Text',
-                      ),
-                    ),
-                  ),
-                ),
-                InkWell(
-                  // Use InkWell for a larger tappable area
-                  onTap: copyAndExport,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Icon(Icons.copy),
-                  ),
-                ),
-              ],
+        // Text Field Container
+        Container(
+          height: textFieldHeight,
+          width: double.infinity,
+          padding: const EdgeInsets.all(8.0),
+          child: SingleChildScrollView(
+            controller: textFieldScrollController,
+            child: TextField(
+              controller: textController,
+              maxLines: null,
+              readOnly: true,
+              onTap: () {
+                setState(() {
+                  isKeyboardVisible = true;
+                });
+              },
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Input Text',
+              ),
             ),
           ),
         ),
-        if (isKeyboardVisible) // Show keyboard only when flag is true
-          SizedBox(
-            height: keyboardHeight,
-            child: ListView.builder(
-              controller: scrollController,
-              itemCount: keys.length,
-              itemBuilder: (context, index) {
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: keys[index].map((key) => buildKey(key)).toList(),
-                );
-              },
+
+        // Copy & Export Button
+        InkWell(
+          onTap: copyAndExport,
+          child: Container(
+            width: double.infinity,
+            height: 48,
+            color: Colors.blue,
+            alignment: Alignment.center,
+            child: Text(
+              "Copy & Export",
+              style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ),
+        ),
+
+        // Keyboard
+        if (isKeyboardVisible)
+          SizedBox(
+              height: keyboardHeight - bottomMargin,
+              width: double.infinity,
+              child: Container(
+                margin: EdgeInsets.only(bottom: bottomMargin),
+                child: ListView.builder(
+                  controller: scrollController,
+                  itemCount: keys.length,
+                  itemBuilder: (context, index) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children:
+                          keys[index].map((key) => buildKey(key)).toList(),
+                    );
+                  },
+                ),
+              ))
       ],
     );
   }

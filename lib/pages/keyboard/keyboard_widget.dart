@@ -66,16 +66,20 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
           centerTitle: false,
           elevation: 2.0,
         ),
-        body: const SafeArea(
+        body: SafeArea(
           top: true,
           child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
               Align(
-                alignment: AlignmentDirectional(0.0, 0.0),
-                child: custom_widgets.CustomKeyboardCopy(
-                  width: 380.0,
-                  height: 700.0,
+                alignment: const AlignmentDirectional(0.0, 0.0),
+                child: SizedBox(
+                  width: MediaQuery.sizeOf(context).width * 1.0,
+                  height: MediaQuery.sizeOf(context).height * 1.0,
+                  child: custom_widgets.CustomKeyboardCopy(
+                    width: MediaQuery.sizeOf(context).width * 1.0,
+                    height: MediaQuery.sizeOf(context).height * 1.0,
+                  ),
                 ),
               ),
             ],
