@@ -128,14 +128,16 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     final String filePath = '${directory.path}/coordinates.csv';
 
     final File file = File(filePath);
-    File csvFile = await file.writeAsString(csv);
+    await file.writeAsString(csv);
 
+    /* Uncomment if wanting to send to email on actual phone
     var status = await Permission.storage.status;
     if (!status.isGranted) {
       await Permission.storage.request();
     }
 
     await sendEmailWithCsv(csvFile);
+    */
   }
 
   void onKeyTap(String key, DragDownDetails details) {
