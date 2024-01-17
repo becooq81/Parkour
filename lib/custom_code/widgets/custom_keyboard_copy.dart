@@ -14,6 +14,7 @@ import 'package:csv/csv.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
 
 class CustomKeyboardCopy extends StatefulWidget {
   const CustomKeyboardCopy(
@@ -73,6 +74,18 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     });
   }
 
+  Future<void> sendEmailWithCsv(File csvFile) async {
+    final Email email = Email(
+      body: 'Here is your CSV file.',
+      subject: 'CSV File',
+      recipients: ['becooq81@gmail.com'],
+      attachmentPaths: [csvFile.path],
+      isHTML: false,
+    );
+
+    await FlutterEmailSender.send(email);
+  }
+
   /*
   void exportCoordinatesToCSV() async {
     // Request necessary permissions for external storage (Android)
@@ -111,19 +124,18 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     final String csv = const ListToCsvConverter().convert(csvData);
 
     // Updated path to the project directory
-    final Directory projectDirectory = Directory.current;
-    final String filePath = '${projectDirectory.path}/coordinates.csv';
+    final Directory directory = await getApplicationDocumentsDirectory();
+    final String filePath = '${directory.path}/coordinates.csv';
 
     final File file = File(filePath);
-    await file.writeAsString(csv);
+    File csvFile = await file.writeAsString(csv);
 
-    // Check if the file exists and notify the user
-    if (await file.exists()) {
-      print('CSV file exported to: $filePath');
-    } else {
-      print('Failed to create CSV file.');
-      // Optionally, show an error message to the user
+    var status = await Permission.storage.status;
+    if (!status.isGranted) {
+      await Permission.storage.request();
     }
+
+    await sendEmailWithCsv(csvFile);
   }
 
   void onKeyTap(String key, DragDownDetails details) {
