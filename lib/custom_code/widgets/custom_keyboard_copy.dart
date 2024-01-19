@@ -78,7 +78,7 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     final Email email = Email(
       body: 'Here is your CSV file.',
       subject: 'CSV File',
-      recipients: ['becooq81@gmail.com'],
+      recipients: ['gdsc.yonsei.parkour@gmail.com'],
       attachmentPaths: [csvFile.path],
       isHTML: false,
     );
@@ -86,35 +86,6 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     await FlutterEmailSender.send(email);
   }
 
-  /*
-  void exportCoordinatesToCSV() async {
-    // Request necessary permissions for external storage (Android)
-    if (Platform.isAndroid) {
-      var status = await Permission.storage.status;
-      if (!status.isGranted) {
-        await Permission.storage.request();
-      }
-    }
-    final coordinatesList = coordinates.map((e) => [e.dx, e.dy]).toList();
-    final List<List<dynamic>> csvData = [
-      ['X', 'Y'],
-      ...coordinatesList,
-    ];
-    final String csv = const ListToCsvConverter().convert(csvData);
-    // Get the appropriate directory
-    final Directory directory = await getApplicationDocumentsDirectory();
-    final String filePath = '${directory.path}/coordinates.csv';
-    final File file = File(filePath);
-    await file.writeAsString(csv);
-    // Check if the file exists and notify the user
-    if (await file.exists()) {
-      Share.shareFiles([filePath], text: 'Your Coordinates CSV File');
-    } else {
-      print('Failed to create CSV file.');
-      // Optionally, show an error message to the user
-    }
-  }
-  */
   void exportCoordinatesToCSV() async {
     final coordinatesList = coordinates.map((e) => [e.dx, e.dy]).toList();
     final List<List<dynamic>> csvData = [
@@ -143,21 +114,25 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
   void onKeyTap(String key, DragDownDetails details) {
     final position = details.globalPosition;
     Offset relativePosition = getRelativePosition(position);
-    coordinates.add(relativePosition);
+
     if (key == "←") {
       if (text.isNotEmpty) {
         text = text.substring(0, text.length - 1);
+        coordinates.add(Offset(60000.0, 60000.0));
       }
     } else if (key == "↑") {
       isShiftEnabled = !isShiftEnabled;
+      coordinates.add(Offset(60000.0, 60000.0));
     } else if (key == " ") {
       text += ' ';
+      coordinates.add(Offset(60000.0, 60000.0));
       sendCoordinatesToServer(coordinates);
-      coordinates.clear();
     } else if (key == "⏎") {
       text += '\n';
+      coordinates.add(Offset(60000.0, 60000.0));
     } else {
       text += isShiftEnabled ? key.toUpperCase() : key.toLowerCase();
+      coordinates.add(relativePosition);
     }
     updateTextAndScroll(text);
     textController.text = text;
