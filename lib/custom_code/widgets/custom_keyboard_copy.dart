@@ -117,18 +117,18 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     if (key == "←") {
       if (text.isNotEmpty) {
         text = text.substring(0, text.length - 1);
-        coordinates.add(Offset(60000.0, 60000.0));
+        coordinates.add(Offset(100000.0, 100000.0));
       }
     } else if (key == "↑") {
       isShiftEnabled = !isShiftEnabled;
-      coordinates.add(Offset(60000.0, 60000.0));
+      coordinates.add(Offset(200000.0, 200000.0));
     } else if (key == " ") {
       text += ' ';
-      coordinates.add(Offset(60000.0, 60000.0));
+      coordinates.add(Offset(300000.0, 300000.0));
       sendCoordinatesToServer(coordinates);
     } else if (key == "⏎") {
       text += '\n';
-      coordinates.add(Offset(60000.0, 60000.0));
+      coordinates.add(Offset(400000.0, 400000.0));
     } else {
       text += isShiftEnabled ? key.toUpperCase() : key.toLowerCase();
       coordinates.add(relativePosition);
