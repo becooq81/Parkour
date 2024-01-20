@@ -3,25 +3,25 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/custom_code/widgets/index.dart' as custom_widgets;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'keyboard_model.dart';
-export 'keyboard_model.dart';
+import 'korean_model.dart';
+export 'korean_model.dart';
 
-class KeyboardWidget extends StatefulWidget {
-  const KeyboardWidget({super.key});
+class KoreanWidget extends StatefulWidget {
+  const KoreanWidget({super.key});
 
   @override
-  _KeyboardWidgetState createState() => _KeyboardWidgetState();
+  _KoreanWidgetState createState() => _KoreanWidgetState();
 }
 
-class _KeyboardWidgetState extends State<KeyboardWidget> {
-  late KeyboardModel _model;
+class _KoreanWidgetState extends State<KoreanWidget> {
+  late KoreanModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
-    _model = createModel(context, () => KeyboardModel());
+    _model = createModel(context, () => KoreanModel());
 
     WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
   }
@@ -66,17 +66,17 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
           centerTitle: false,
           elevation: 2.0,
         ),
-        body: SafeArea(
+        body: const SafeArea(
           top: true,
           child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
               SizedBox(
-                width: MediaQuery.sizeOf(context).width * 1.0,
-                height: MediaQuery.sizeOf(context).height * 0.8,
-                child: custom_widgets.CustomKeyboardCopy(
-                  width: MediaQuery.sizeOf(context).width * 1.0,
-                  height: MediaQuery.sizeOf(context).height * 0.8,
+                width: double.infinity,
+                height: 400.0,
+                child: custom_widgets.CustomKoreanKeyboard(
+                  width: double.infinity,
+                  height: 400.0,
                 ),
               ),
             ],

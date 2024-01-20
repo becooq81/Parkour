@@ -16,9 +16,8 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 
-class CustomKeyboardCopy extends StatefulWidget {
-  const CustomKeyboardCopy(
-      {Key? key, required this.height, required this.width})
+class DesignedKeyboard extends StatefulWidget {
+  const DesignedKeyboard({Key? key, required this.height, required this.width})
       : super(key: key);
   final double? height;
   final double? width;
@@ -26,14 +25,17 @@ class CustomKeyboardCopy extends StatefulWidget {
   _CustomKeyboardState createState() => _CustomKeyboardState();
 }
 
-class _CustomKeyboardState extends State<CustomKeyboardCopy> {
+class _CustomKeyboardState extends State<DesignedKeyboard> {
   String text = "";
   bool isShiftEnabled = false;
+  bool isNumKeypad = false;
   TextEditingController textController = TextEditingController();
   bool isKeyboardVisible = false;
   List<Offset> coordinates = [];
   ScrollController scrollController = ScrollController();
   ScrollController textFieldScrollController = ScrollController();
+  FocusNode textFocusNode = FocusNode();
+  int cursorPosition = 0;
 
   @override
   void initState() {
@@ -69,7 +71,6 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
   void copyAndExport() {
     Clipboard.setData(ClipboardData(text: text));
     exportCoordinatesToCSV();
-    exportKeyCoordinatesToCSV();
     setState(() {
       isKeyboardVisible = false; // Hide the keyboard
     });
@@ -106,31 +107,48 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     if (!status.isGranted) {
       await Permission.storage.request();
     }
-
     await sendEmailWithCsv(file);
   }
 
   void onKeyTap(String key, DragDownDetails details) {
     final position = details.globalPosition;
     Offset relativePosition = getRelativePosition(position);
-
     if (key == "←") {
-      if (text.isNotEmpty) {
-        text = text.substring(0, text.length - 1);
-        coordinates.add(Offset(60000.0, 60000.0));
+      if (text.isNotEmpty && cursorPosition != 0) {
+        text = text.substring(0, cursorPosition - 1) +
+            text.substring(cursorPosition);
+        cursorPosition--;
       }
     } else if (key == "↑") {
       isShiftEnabled = !isShiftEnabled;
-      coordinates.add(Offset(60000.0, 60000.0));
-    } else if (key == " ") {
-      text += ' ';
-      coordinates.add(Offset(60000.0, 60000.0));
+    } else if (key == "    " || key == "␣") {
+      text = text.substring(0, cursorPosition) +
+          " " +
+          text.substring(cursorPosition);
+      cursorPosition++;
       sendCoordinatesToServer(coordinates);
     } else if (key == "⏎") {
-      text += '\n';
+      text = text.substring(0, cursorPosition) +
+          "\n" +
+          text.substring(cursorPosition);
+      cursorPosition++;
+    } else if (key == "<") {
+      cursorPosition = max(0, cursorPosition - 1);
+    } else if (key == ">") {
+      cursorPosition = min(text.length, cursorPosition + 1);
+    } else if (key == "123") {
+      isNumKeypad = !isNumKeypad;
+    } else {
+      String addText = isShiftEnabled ? key.toUpperCase() : key.toLowerCase();
+      text = text.substring(0, cursorPosition) +
+          addText +
+          text.substring(cursorPosition);
+      cursorPosition++;
+    }
+
+    if (isSpecialKey(key)) {
       coordinates.add(Offset(60000.0, 60000.0));
     } else {
-      text += isShiftEnabled ? key.toUpperCase() : key.toLowerCase();
       coordinates.add(relativePosition);
     }
     updateTextAndScroll(text);
@@ -169,72 +187,6 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
         centerOfKeyboard.dy - globalPosition.dy);
   }
 
-  Offset getKeyCenter(String key) {
-    // Ensure widget.height and widget.width are not null
-    final double keyboardHeight =
-        widget.height ?? MediaQuery.of(context).size.height;
-    final double keyboardWidth =
-        widget.width ?? MediaQuery.of(context).size.width;
-
-    // Find the row index and the key's index within that row
-    int rowIndex = 0;
-    int keyIndexInRow = 0;
-    for (int i = 0; i < keys.length; i++) {
-      if (keys[i].contains(key)) {
-        rowIndex = i;
-        keyIndexInRow = keys[i].indexOf(key);
-        break;
-      }
-    }
-
-    // Get the number of keys in the current row
-    int numberOfKeysInRow = keys[rowIndex].length;
-
-    // Calculate the width of each key in the current row
-    double keyWidth = keyboardWidth / numberOfKeysInRow;
-
-    // Assuming equal height for all keys
-    double keyHeight = keyboardHeight * 0.4 / keys.length;
-
-    // Calculate the center X coordinate for the key
-    double centerX = (keyIndexInRow + 0.5) * keyWidth;
-
-    // Calculate the center Y coordinate for the key
-    double centerY = (rowIndex + 0.5) * keyHeight;
-
-    // Calculate the center of the keyboard
-    double keyboardCenterX = keyboardWidth / 2;
-    double keyboardCenterY = keyboardHeight * 0.4 / 2;
-
-    // Calculate the coordinates relative to the center of the keyboard
-    double relativeCenterX = centerX - keyboardCenterX;
-    double relativeCenterY = centerY - keyboardCenterY;
-
-    return Offset(relativeCenterX, relativeCenterY);
-  }
-
-  // Calculate and export key coordinates to CSV
-  void exportKeyCoordinatesToCSV() async {
-    final Directory directory = await getApplicationDocumentsDirectory();
-    final String filePath = '${directory.path}/key_coordinates.csv';
-    final File file = File(filePath);
-
-    List<List<dynamic>> csvData = [
-      ['Key', 'Center X', 'Center Y'],
-    ];
-
-    for (var row in keys) {
-      for (var key in row) {
-        final keyCenter = getKeyCenter(key);
-        csvData.add([key, keyCenter.dx, keyCenter.dy]);
-      }
-    }
-
-    String csv = const ListToCsvConverter().convert(csvData);
-    await file.writeAsString(csv);
-    await sendEmailWithCsv(file);
-  }
-
   double get keyHeight => isKeyboardVisible
       ? (widget.height ?? MediaQuery.of(context).size.height) *
           0.4 /
@@ -264,8 +216,37 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     );
   }
 
+  Widget buildNumKey(String key) {
+    return Expanded(
+      child: GestureDetector(
+        onPanDown: (details) => onKeyTap(key, details),
+        child: Container(
+          height: keyHeight, // Set the height of the key
+          alignment: Alignment.center,
+          margin: EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.black54),
+            color: Colors.grey[200],
+          ),
+          child: Text(
+            isShiftEnabled && !isSpecialKey(key)
+                ? key.toUpperCase()
+                : key.toLowerCase(),
+            style: TextStyle(fontSize: 25),
+          ),
+        ),
+      ),
+    );
+  }
+
   bool isSpecialKey(String key) {
-    return key == "↑" || key == "←" || key == " ";
+    return key == "↑" ||
+        key == "←" ||
+        key == " " ||
+        key == "<" ||
+        key == ">" ||
+        key == "123" ||
+        key == "*/?";
   }
 
   @override
@@ -273,8 +254,8 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     final double screenHeight =
         widget.height?.toDouble() ?? MediaQuery.of(context).size.height;
     final double keyboardHeight = isKeyboardVisible
-        ? (screenHeight * 0.4)
-        : 0; // Keyboard occupies 40% of screen
+        ? (screenHeight * 0.45)
+        : 0; // Keyboard occupies 50% of screen
 
     final textFieldHeight = screenHeight -
         keyboardHeight -
@@ -291,12 +272,17 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
             controller: textFieldScrollController,
             child: TextField(
               controller: textController,
+              focusNode: textFocusNode,
               maxLines: null,
-              readOnly: true,
+              readOnly: false,
+              showCursor: true,
+              cursorWidth: 2.0,
               onTap: () {
                 setState(() {
                   isKeyboardVisible = true;
                 });
+                // Prevent the default keyboard from appearing
+                textFocusNode.canRequestFocus = false;
               },
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
@@ -315,14 +301,14 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
             color: Colors.blue,
             alignment: Alignment.center,
             child: Text(
-              "Copy & Export",
+              "Copy",
               style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ),
         ),
 
         // Keyboard
-        if (isKeyboardVisible)
+        if (isKeyboardVisible && !isNumKeypad)
           SizedBox(
               height: keyboardHeight,
               width: double.infinity,
@@ -338,7 +324,24 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
                     );
                   },
                 ),
-              ))
+              )),
+        if (isKeyboardVisible && isNumKeypad)
+          SizedBox(
+              height: keyboardHeight,
+              width: double.infinity,
+              child: Container(
+                child: ListView.builder(
+                  controller: scrollController,
+                  itemCount: numKeys.length,
+                  itemBuilder: (context, index) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children:
+                          numKeys[index].map((key) => buildKey(key)).toList(),
+                    );
+                  },
+                ),
+              )),
       ],
     );
   }
@@ -346,7 +349,15 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
   List<List<String>> keys = [
     ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
     ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
-    ["↑", "Z", "X", "C", "V", "B", "N", "M", "←"],
-    [" ", "⏎"]
+    ["Z", "X", "C", "V", "B", "N", "M"],
+    ["↑", "    ", ".", "←"],
+    ["123", "*/?", "⏎", "<", ">"]
+  ];
+
+  List<List<String>> numKeys = [
+    ["1", "2", "3", "-"],
+    ["4", "5", "6", "␣"],
+    ["7", "8", "9", "⏎"],
+    ["123", "*/?", "<", ">"]
   ];
 }

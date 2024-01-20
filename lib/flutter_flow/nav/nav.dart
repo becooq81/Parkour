@@ -49,6 +49,11 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           path: '/blank',
           builder: (context, params) =>
               params.isEmpty ? const NavBarPage(initialPage: 'Blank') : const BlankWidget(),
+        ),
+        FFRoute(
+          name: 'korean',
+          path: '/korean',
+          builder: (context, params) => const KoreanWidget(),
         )
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );
