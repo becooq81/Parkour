@@ -48,8 +48,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     textController = TextEditingController();
     scrollController = ScrollController();
     textFieldScrollController = ScrollController();
-    isShiftEnabled = false;
-    isDoubleShiftEnabled = false;
     lastShiftTap = DateTime.now();
   }
 
@@ -246,10 +244,9 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         key: "CHANGE TO ALPHABET KEYPAD",
       ));
     } else {
-      String addText =
-          ((isShiftEnabled || isDoubleShiftEnabled) && !isSpecialKey(key))
-              ? key.toUpperCase()
-              : key.toLowerCase();
+      String addText = (isShiftEnabled || isDoubleShiftEnabled)
+          ? key.toUpperCase()
+          : key.toLowerCase();
       text = text.substring(0, cursorPosition) +
           addText +
           text.substring(cursorPosition);
@@ -260,7 +257,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         isDoubleShiftEnabled: isDoubleShiftEnabled,
         isNumKeypad: isNumKeypad,
         timestamp: DateTime.now(),
-        key: key,
+        key: addText,
       ));
     }
 
@@ -495,7 +492,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     final textFieldHeight = screenHeight -
         keyboardHeight -
         48; // 48 is the height of the copy button
-    isShiftEnabled = text.isEmpty;
 
     return Column(
       children: [
