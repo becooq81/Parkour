@@ -101,19 +101,26 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   void exportCoordinatesToCSV() async {
     final coordinatesList = coordinates
         .map((e) => [
-              DateFormat('yyyy-MM-dd HH:mm:ss')
-                  .format(e.timestamp), // Format the timestamp
+              DateFormat('yyyy-MM-dd HH:mm:ss').format(e.timestamp),
               e.position.dx,
               e.position.dy,
-              (e.isShiftEnabled || isDoubleShiftEnabled)
-                  ? 'true'
-                  : 'false', // Adjusted logic for isShiftEnabled
+              e.isShiftEnabled,
+              e.isDoubleShiftEnabled,
               e.isNumKeypad ? 'true' : 'false',
+              e.key,
             ])
         .toList();
 
     final List<List<dynamic>> csvData = [
-      ['Timestamp', 'X', 'Y', 'Is Shift Enabled', 'Is Num Keypad'],
+      [
+        'Timestamp',
+        'X',
+        'Y',
+        'Is Shift Enabled',
+        'Is Double Shift Enabled',
+        'Is Num Keypad',
+        'Key value'
+      ],
       ...coordinatesList,
     ];
     final String csv = const ListToCsvConverter().convert(csvData);
@@ -142,8 +149,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       coordinates.add(KeyPressInfo(
         position: Offset(100000.0, 100000.0),
         isShiftEnabled: isShiftEnabled,
+        isDoubleShiftEnabled: isDoubleShiftEnabled,
         isNumKeypad: isNumKeypad,
         timestamp: DateTime.now(),
+        key: "BACKSPACE",
       ));
     } else if (key == "↑") {
       if (isDoubleShiftEnabled) {
@@ -164,8 +173,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       coordinates.add(KeyPressInfo(
         position: Offset(200000.0, 200000.0),
         isShiftEnabled: isShiftEnabled,
+        isDoubleShiftEnabled: isDoubleShiftEnabled,
         isNumKeypad: isNumKeypad,
         timestamp: DateTime.now(),
+        key: "SHIFT",
       ));
     } else if (key == " " || key == "␣") {
       text = text.substring(0, cursorPosition) +
@@ -175,8 +186,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       coordinates.add(KeyPressInfo(
         position: Offset(400000.0, 400000.0),
         isShiftEnabled: isShiftEnabled,
+        isDoubleShiftEnabled: isDoubleShiftEnabled,
         isNumKeypad: isNumKeypad,
         timestamp: DateTime.now(),
+        key: "SPACEBAR",
       ));
       sendCoordinatesToServer(coordinates);
     } else if (key == "⏎") {
@@ -187,40 +200,50 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       coordinates.add(KeyPressInfo(
         position: Offset(300000.0, 300000.0),
         isShiftEnabled: isShiftEnabled,
+        isDoubleShiftEnabled: isDoubleShiftEnabled,
         isNumKeypad: isNumKeypad,
         timestamp: DateTime.now(),
+        key: "ENTER",
       ));
     } else if (key == "<") {
       cursorPosition = max(0, cursorPosition - 1);
       coordinates.add(KeyPressInfo(
         position: Offset(500000.0, 500000.0),
         isShiftEnabled: isShiftEnabled,
+        isDoubleShiftEnabled: isDoubleShiftEnabled,
         isNumKeypad: isNumKeypad,
         timestamp: DateTime.now(),
+        key: "MOVE CURSOR LEFT",
       ));
     } else if (key == ">") {
       cursorPosition = min(text.length, cursorPosition + 1);
       coordinates.add(KeyPressInfo(
         position: Offset(600000.0, 600000.0),
         isShiftEnabled: isShiftEnabled,
+        isDoubleShiftEnabled: isDoubleShiftEnabled,
         isNumKeypad: isNumKeypad,
         timestamp: DateTime.now(),
+        key: "MOVE CURSOR RIGHT",
       ));
     } else if (key == "123") {
       isNumKeypad = !isNumKeypad;
       coordinates.add(KeyPressInfo(
         position: Offset(700000.0, 700000.0),
         isShiftEnabled: isShiftEnabled,
+        isDoubleShiftEnabled: isDoubleShiftEnabled,
         isNumKeypad: isNumKeypad,
         timestamp: DateTime.now(),
+        key: "CHANGE TO NUMKEYPAD",
       ));
     } else if (key == "abc") {
       isNumKeypad = !isNumKeypad;
       coordinates.add(KeyPressInfo(
         position: Offset(800000.0, 800000.0),
         isShiftEnabled: isShiftEnabled,
+        isDoubleShiftEnabled: isDoubleShiftEnabled,
         isNumKeypad: isNumKeypad,
         timestamp: DateTime.now(),
+        key: "CHANGE TO ALPHABET KEYPAD",
       ));
     } else {
       String addText =
@@ -234,8 +257,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       coordinates.add(KeyPressInfo(
         position: relativePosition,
         isShiftEnabled: isShiftEnabled,
+        isDoubleShiftEnabled: isDoubleShiftEnabled,
         isNumKeypad: isNumKeypad,
         timestamp: DateTime.now(),
+        key: key,
       ));
     }
 
@@ -325,6 +350,45 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     return Offset(relativeCenterX, relativeCenterY);
   }
 
+  Offset getKeyCenterForNumPad(String key) {
+    // Find the row index and the key's index within that row for the number keypad
+    int rowIndex = numKeys.indexWhere((row) => row.contains(key));
+    int keyIndexInRow = numKeys[rowIndex].indexOf(key);
+
+    // Assuming different dimensions for number keys, calculate their width and height
+    final double keyboardWidth = MediaQuery.of(context).size.width;
+    double keyWidth = keyboardWidth / numKeys[rowIndex].length;
+
+    // Assuming the number keypad occupies a different portion of the screen
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double keyboardHeight =
+        screenHeight * 0.3; // Example: 30% of the screen
+
+    // Calculate the height of each key in the number keypad
+    double keyHeight = keyboardHeight / numKeys.length;
+
+    // Calculate the top-left coordinate of the key in the number keypad
+    double topLeftX = keyIndexInRow * keyWidth;
+    double topLeftY = rowIndex * keyHeight;
+
+    // Calculate the center coordinate of the key
+    double centerX = topLeftX + keyWidth / 2;
+    double centerY = topLeftY + keyHeight / 2;
+
+    // Calculate the center of the keyboard
+    double keyboardCenterX = keyboardWidth / 2;
+    double keyboardCenterY = keyboardHeight / 2;
+
+    // Calculate the key center relative to the keyboard center
+    double relativeCenterX = centerX - keyboardCenterX;
+    double relativeCenterY = centerY - keyboardCenterY;
+
+    // Inverting the Y-axis to follow the conventional coordinate system
+    relativeCenterY = -relativeCenterY;
+
+    return Offset(relativeCenterX, relativeCenterY);
+  }
+
   // Calculate and export key coordinates to CSV
   void exportKeyCoordinatesToCSV() async {
     final Directory directory = await getApplicationDocumentsDirectory();
@@ -338,6 +402,15 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     for (var row in keys) {
       for (var key in row) {
         final keyCenter = getKeyCenter(key);
+        csvData.add([key, keyCenter.dx, keyCenter.dy]);
+      }
+    }
+
+    // Add coordinates for number keys
+    for (var row in numKeys) {
+      for (var key in row) {
+        final keyCenter =
+            getKeyCenterForNumPad(key); // Use the new function for number keys
         csvData.add([key, keyCenter.dx, keyCenter.dy]);
       }
     }
@@ -528,13 +601,17 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
 class KeyPressInfo {
   final Offset position;
   final bool isShiftEnabled;
+  final bool isDoubleShiftEnabled;
   final bool isNumKeypad;
   final DateTime timestamp;
+  final String key;
 
   KeyPressInfo({
     required this.position,
     required this.isShiftEnabled,
+    required this.isDoubleShiftEnabled,
     required this.isNumKeypad,
     required this.timestamp,
+    required this.key,
   });
 }
