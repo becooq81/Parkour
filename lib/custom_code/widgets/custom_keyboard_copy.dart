@@ -34,6 +34,8 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
   List<Offset> coordinates = [];
   ScrollController scrollController = ScrollController();
   ScrollController textFieldScrollController = ScrollController();
+  late File keyCoordinatesCSV;
+  late File inputCoordinatesCSV;
 
   @override
   void initState() {
@@ -70,17 +72,18 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     Clipboard.setData(ClipboardData(text: text));
     exportCoordinatesToCSV();
     exportKeyCoordinatesToCSV();
+    sendEmailWithCsvs(keyCoordinatesCSV, inputCoordinatesCSV);
     setState(() {
       isKeyboardVisible = false; // Hide the keyboard
     });
   }
 
-  Future<void> sendEmailWithCsv(File csvFile) async {
+  Future<void> sendEmailWithCsvs(File csvFile1, File csvFile2) async {
     final Email email = Email(
-      body: 'Here is your CSV file.',
-      subject: 'CSV File',
+      body: 'Here are your CSV files.',
+      subject: 'CSV Files',
       recipients: ['gdsc.yonsei.parkour@gmail.com'],
-      attachmentPaths: [csvFile.path],
+      attachmentPaths: [csvFile1.path, csvFile2.path], // Attach two files
       isHTML: false,
     );
 
@@ -98,16 +101,13 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     // Updated path to the project directory
     final Directory directory = await getApplicationDocumentsDirectory();
     final String filePath = '${directory.path}/coordinates.csv';
-
-    final File file = File(filePath);
-    await file.writeAsString(csv);
+    inputCoordinatesCSV = File(filePath);
+    await inputCoordinatesCSV.writeAsString(csv);
 
     var status = await Permission.storage.status;
     if (!status.isGranted) {
       await Permission.storage.request();
     }
-
-    await sendEmailWithCsv(file);
   }
 
   void onKeyTap(String key, DragDownDetails details) {
@@ -170,12 +170,6 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
   }
 
   Offset getKeyCenter(String key) {
-    // Ensure widget.height and widget.width are not null
-    final double keyboardHeight =
-        widget.height ?? MediaQuery.of(context).size.height;
-    final double keyboardWidth =
-        widget.width ?? MediaQuery.of(context).size.width;
-
     // Find the row index and the key's index within that row
     int rowIndex = 0;
     int keyIndexInRow = 0;
@@ -187,26 +181,30 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
       }
     }
 
-    // Get the number of keys in the current row
+    // Calculate the width of the keyboard and each key
+    final double keyboardWidth = MediaQuery.of(context).size.width;
     int numberOfKeysInRow = keys[rowIndex].length;
-
-    // Calculate the width of each key in the current row
     double keyWidth = keyboardWidth / numberOfKeysInRow;
 
     // Assuming equal height for all keys
-    double keyHeight = keyboardHeight * 0.4 / keys.length;
+    final double screenHeight =
+        widget.height ?? MediaQuery.of(context).size.height;
+    final double keyboardHeight = isKeyboardVisible ? screenHeight * 0.4 : 0;
+    double keyHeight = keyboardHeight / keys.length;
 
-    // Calculate the center X coordinate for the key
-    double centerX = (keyIndexInRow + 0.5) * keyWidth;
+    // Calculate the top-left X and Y coordinate for the key
+    double topLeftX = keyIndexInRow * keyWidth;
+    double topLeftY = rowIndex * keyHeight;
 
-    // Calculate the center Y coordinate for the key
-    double centerY = (rowIndex + 0.5) * keyHeight;
+    // Calculate the center X and Y coordinate for the key
+    double centerX = topLeftX + keyWidth / 2;
+    double centerY = topLeftY + keyHeight / 2;
 
     // Calculate the center of the keyboard
     double keyboardCenterX = keyboardWidth / 2;
-    double keyboardCenterY = keyboardHeight * 0.4 / 2;
+    double keyboardCenterY = keyboardHeight / 2;
 
-    // Calculate the coordinates relative to the center of the keyboard
+    // Adjust the key coordinates to be relative to the center of the keyboard
     double relativeCenterX = centerX - keyboardCenterX;
     double relativeCenterY = centerY - keyboardCenterY;
 
@@ -217,7 +215,7 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
   void exportKeyCoordinatesToCSV() async {
     final Directory directory = await getApplicationDocumentsDirectory();
     final String filePath = '${directory.path}/key_coordinates.csv';
-    final File file = File(filePath);
+    keyCoordinatesCSV = File(filePath);
 
     List<List<dynamic>> csvData = [
       ['Key', 'Center X', 'Center Y'],
@@ -231,8 +229,7 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     }
 
     String csv = const ListToCsvConverter().convert(csvData);
-    await file.writeAsString(csv);
-    await sendEmailWithCsv(file);
+    await keyCoordinatesCSV.writeAsString(csv);
   }
 
   double get keyHeight => isKeyboardVisible
