@@ -31,7 +31,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   bool isNumKeypad = false;
   TextEditingController textController = TextEditingController();
   bool isKeyboardVisible = false;
-  List<Offset> coordinates = [];
+  List<KeyPressInfo> coordinates = [];
   ScrollController scrollController = ScrollController();
   ScrollController textFieldScrollController = ScrollController();
   FocusNode textFocusNode = FocusNode();
@@ -89,11 +89,21 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   }
 
   void exportCoordinatesToCSV() async {
-    final coordinatesList = coordinates.map((e) => [e.dx, e.dy]).toList();
+    // Create a list of lists, where each inner list represents a row in the CSV file
     final List<List<dynamic>> csvData = [
-      ['X', 'Y'],
-      ...coordinatesList,
+      // Define the headers
+      ['X', 'Y', 'Is Shift Enabled', 'Is Num Keypad'],
     ];
+
+    // Add the data from each KeyPressInfo object to the csvData list
+    csvData.addAll(coordinates.map((e) => [
+          e.position.dx,
+          e.position.dy,
+          e.isShiftEnabled.toString(),
+          e.isNumKeypad.toString(),
+        ]));
+
+    // Convert the data to CSV format
     final String csv = const ListToCsvConverter().convert(csvData);
 
     // Updated path to the project directory
@@ -119,24 +129,46 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             text.substring(cursorPosition);
         cursorPosition--;
       }
+      coordinates.add(KeyPressInfo(
+        position: Offset(100000.0, 100000.0),
+        isShiftEnabled: isShiftEnabled,
+        isNumKeypad: isNumKeypad,
+      ));
     } else if (key == "↑") {
       isShiftEnabled = !isShiftEnabled;
-    } else if (key == "    " || key == "␣") {
+      coordinates.add(KeyPressInfo(
+        position: Offset(200000.0, 200000.0),
+        isShiftEnabled: isShiftEnabled,
+        isNumKeypad: isNumKeypad,
+      ));
+    } else if (key == " " || key == "␣") {
       text = text.substring(0, cursorPosition) +
           " " +
           text.substring(cursorPosition);
       cursorPosition++;
+      coordinates.add(KeyPressInfo(
+        position: Offset(400000.0, 400000.0),
+        isShiftEnabled: isShiftEnabled,
+        isNumKeypad: isNumKeypad,
+      ));
       sendCoordinatesToServer(coordinates);
     } else if (key == "⏎") {
       text = text.substring(0, cursorPosition) +
           "\n" +
           text.substring(cursorPosition);
       cursorPosition++;
+      coordinates.add(KeyPressInfo(
+        position: Offset(300000.0, 300000.0),
+        isShiftEnabled: isShiftEnabled,
+        isNumKeypad: isNumKeypad,
+      ));
     } else if (key == "<") {
       cursorPosition = max(0, cursorPosition - 1);
     } else if (key == ">") {
       cursorPosition = min(text.length, cursorPosition + 1);
     } else if (key == "123") {
+      isNumKeypad = !isNumKeypad;
+    } else if (key == "abc") {
       isNumKeypad = !isNumKeypad;
     } else {
       String addText = isShiftEnabled ? key.toUpperCase() : key.toLowerCase();
@@ -144,25 +176,36 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
           addText +
           text.substring(cursorPosition);
       cursorPosition++;
+      coordinates.add(KeyPressInfo(
+        position: relativePosition,
+        isShiftEnabled: isShiftEnabled,
+        isNumKeypad: isNumKeypad,
+      ));
     }
 
-    if (isSpecialKey(key)) {
-      coordinates.add(Offset(60000.0, 60000.0));
-    } else {
-      coordinates.add(relativePosition);
-    }
     updateTextAndScroll(text);
     textController.text = text;
+
+    if (isShiftEnabled && !isSpecialKey(key)) {
+      isShiftEnabled = false;
+    }
   }
 
-  Future<void> sendCoordinatesToServer(List<Offset> coords) async {
+  Future<void> sendCoordinatesToServer(List<KeyPressInfo> keyPressInfos) async {
     var url = Uri.parse('http://your-server-url.com/endpoint');
     try {
       var response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
         body: json.encode({
-          'coordinates': coords.map((e) => {'x': e.dx, 'y': e.dy}).toList()
+          'keyPressInfos': keyPressInfos
+              .map((e) => {
+                    'x': e.position.dx,
+                    'y': e.position.dy,
+                    'isShiftEnabled': e.isShiftEnabled,
+                    'isNumKeypad': e.isNumKeypad
+                  })
+              .toList()
         }),
       );
       if (response.statusCode == 200) {
@@ -194,11 +237,13 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       : 0;
 
   Widget buildKey(String key) {
+    int flexFactor = (key == " ") ? 3 : 1;
     return Expanded(
+      flex: flexFactor,
       child: GestureDetector(
         onPanDown: (details) => onKeyTap(key, details),
         child: Container(
-          height: keyHeight, // Set the height of the key
+          height: keyHeight,
           alignment: Alignment.center,
           margin: EdgeInsets.all(2),
           decoration: BoxDecoration(
@@ -206,9 +251,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             color: Colors.grey[200],
           ),
           child: Text(
-            isShiftEnabled && !isSpecialKey(key)
-                ? key.toUpperCase()
-                : key.toLowerCase(),
+            key,
             style: TextStyle(fontSize: 20),
           ),
         ),
@@ -350,7 +393,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
     ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
     ["Z", "X", "C", "V", "B", "N", "M"],
-    ["↑", "    ", ".", "←"],
+    ["↑", " ", ".", "←"],
     ["123", "*/?", "⏎", "<", ">"]
   ];
 
@@ -358,6 +401,17 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     ["1", "2", "3", "-"],
     ["4", "5", "6", "␣"],
     ["7", "8", "9", "⏎"],
-    ["123", "*/?", "<", ">"]
+    ["abc", "*/?", "<", ">"]
   ];
+}
+
+class KeyPressInfo {
+  final Offset position;
+  final bool isShiftEnabled;
+  final bool isNumKeypad;
+
+  KeyPressInfo(
+      {required this.position,
+      required this.isShiftEnabled,
+      required this.isNumKeypad});
 }

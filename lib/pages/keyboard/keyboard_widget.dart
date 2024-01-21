@@ -55,7 +55,7 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
           backgroundColor: FlutterFlowTheme.of(context).primary,
           automaticallyImplyLeading: false,
           title: Text(
-            'Page Title',
+            'Designed Keyboard',
             style: FlutterFlowTheme.of(context).headlineMedium.override(
                   fontFamily: 'Outfit',
                   color: Colors.white,
@@ -74,7 +74,7 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
               SizedBox(
                 width: MediaQuery.sizeOf(context).width * 1.0,
                 height: MediaQuery.sizeOf(context).height * 0.8,
-                child: custom_widgets.CustomKeyboardCopy(
+                child: custom_widgets.DesignedKeyboard(
                   width: MediaQuery.sizeOf(context).width * 1.0,
                   height: MediaQuery.sizeOf(context).height * 0.8,
                 ),

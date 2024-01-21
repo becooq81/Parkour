@@ -174,13 +174,16 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     int rowIndex = keys.indexWhere((row) => row.contains(key));
     int keyIndexInRow = keys[rowIndex].indexOf(key);
 
-    // Calculate the width and height of the keyboard
+    // Calculate the width of the keyboard and each key
     final double keyboardWidth = MediaQuery.of(context).size.width;
-    final double keyboardHeight =
-        isKeyboardVisible ? MediaQuery.of(context).size.height * 0.4 : 0;
-
-    // Calculate the width and height of a single key
     double keyWidth = keyboardWidth / keys[rowIndex].length;
+
+    // Correctly determine the keyboard height
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double keyboardHeight =
+        screenHeight * 0.4; // Assuming the keyboard occupies 40% of the screen
+
+    // Calculate the height of each key
     double keyHeight = keyboardHeight / keys.length;
 
     // Calculate the top-left coordinate of the key
@@ -199,7 +202,7 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     double relativeCenterX = centerX - keyboardCenterX;
     double relativeCenterY = centerY - keyboardCenterY;
 
-    // Inverting the Y-axis to follow conventional coordinate system
+    // Inverting the Y-axis to follow the conventional coordinate system
     relativeCenterY = -relativeCenterY;
 
     return Offset(relativeCenterX, relativeCenterY);
