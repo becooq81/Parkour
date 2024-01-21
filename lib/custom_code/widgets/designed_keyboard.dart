@@ -192,12 +192,36 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       ));
     } else if (key == "<") {
       cursorPosition = max(0, cursorPosition - 1);
+      coordinates.add(KeyPressInfo(
+        position: Offset(500000.0, 500000.0),
+        isShiftEnabled: isShiftEnabled,
+        isNumKeypad: isNumKeypad,
+        timestamp: DateTime.now(),
+      ));
     } else if (key == ">") {
       cursorPosition = min(text.length, cursorPosition + 1);
+      coordinates.add(KeyPressInfo(
+        position: Offset(600000.0, 600000.0),
+        isShiftEnabled: isShiftEnabled,
+        isNumKeypad: isNumKeypad,
+        timestamp: DateTime.now(),
+      ));
     } else if (key == "123") {
       isNumKeypad = !isNumKeypad;
+      coordinates.add(KeyPressInfo(
+        position: Offset(700000.0, 700000.0),
+        isShiftEnabled: isShiftEnabled,
+        isNumKeypad: isNumKeypad,
+        timestamp: DateTime.now(),
+      ));
     } else if (key == "abc") {
       isNumKeypad = !isNumKeypad;
+      coordinates.add(KeyPressInfo(
+        position: Offset(800000.0, 800000.0),
+        isShiftEnabled: isShiftEnabled,
+        isNumKeypad: isNumKeypad,
+        timestamp: DateTime.now(),
+      ));
     } else {
       String addText =
           ((isShiftEnabled || isDoubleShiftEnabled) && !isSpecialKey(key))
@@ -413,7 +437,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
               controller: textController,
               focusNode: textFocusNode,
               maxLines: null,
-              readOnly: false,
+              readOnly: true,
               showCursor: true,
               cursorWidth: 2.0,
               onTap: () {
