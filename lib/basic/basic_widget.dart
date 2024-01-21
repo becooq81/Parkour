@@ -1,26 +1,27 @@
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
+import '/custom_code/widgets/index.dart' as custom_widgets;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'blank_model.dart';
-export 'blank_model.dart';
+import 'basic_model.dart';
+export 'basic_model.dart';
 
-class BlankWidget extends StatefulWidget {
-  const BlankWidget({super.key});
+class BasicWidget extends StatefulWidget {
+  const BasicWidget({super.key});
 
   @override
-  _BlankWidgetState createState() => _BlankWidgetState();
+  _BasicWidgetState createState() => _BasicWidgetState();
 }
 
-class _BlankWidgetState extends State<BlankWidget> {
-  late BlankModel _model;
+class _BasicWidgetState extends State<BasicWidget> {
+  late BasicModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
-    _model = createModel(context, () => BlankModel());
+    _model = createModel(context, () => BasicModel());
 
     WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {}));
   }
@@ -54,7 +55,7 @@ class _BlankWidgetState extends State<BlankWidget> {
           backgroundColor: FlutterFlowTheme.of(context).primary,
           automaticallyImplyLeading: false,
           title: Text(
-            'Page Title',
+            'Basic Keyboard',
             style: FlutterFlowTheme.of(context).headlineMedium.override(
                   fontFamily: 'Outfit',
                   color: Colors.white,
@@ -65,11 +66,20 @@ class _BlankWidgetState extends State<BlankWidget> {
           centerTitle: false,
           elevation: 2.0,
         ),
-        body: const SafeArea(
+        body: SafeArea(
           top: true,
           child: Column(
             mainAxisSize: MainAxisSize.max,
-            children: [],
+            children: [
+              SizedBox(
+                width: MediaQuery.sizeOf(context).width * 1.0,
+                height: MediaQuery.sizeOf(context).height * 0.8,
+                child: custom_widgets.CustomKeyboardCopy(
+                  width: MediaQuery.sizeOf(context).width * 1.0,
+                  height: MediaQuery.sizeOf(context).height * 0.8,
+                ),
+              ),
+            ],
           ),
         ),
       ),
