@@ -171,32 +171,23 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
 
   Offset getKeyCenter(String key) {
     // Find the row index and the key's index within that row
-    int rowIndex = 0;
-    int keyIndexInRow = 0;
-    for (int i = 0; i < keys.length; i++) {
-      if (keys[i].contains(key)) {
-        rowIndex = i;
-        keyIndexInRow = keys[i].indexOf(key);
-        break;
-      }
-    }
+    int rowIndex = keys.indexWhere((row) => row.contains(key));
+    int keyIndexInRow = keys[rowIndex].indexOf(key);
 
-    // Calculate the width of the keyboard and each key
+    // Calculate the width and height of the keyboard
     final double keyboardWidth = MediaQuery.of(context).size.width;
-    int numberOfKeysInRow = keys[rowIndex].length;
-    double keyWidth = keyboardWidth / numberOfKeysInRow;
+    final double keyboardHeight =
+        isKeyboardVisible ? MediaQuery.of(context).size.height * 0.4 : 0;
 
-    // Assuming equal height for all keys
-    final double screenHeight =
-        widget.height ?? MediaQuery.of(context).size.height;
-    final double keyboardHeight = isKeyboardVisible ? screenHeight * 0.4 : 0;
+    // Calculate the width and height of a single key
+    double keyWidth = keyboardWidth / keys[rowIndex].length;
     double keyHeight = keyboardHeight / keys.length;
 
-    // Calculate the top-left X and Y coordinate for the key
+    // Calculate the top-left coordinate of the key
     double topLeftX = keyIndexInRow * keyWidth;
     double topLeftY = rowIndex * keyHeight;
 
-    // Calculate the center X and Y coordinate for the key
+    // Calculate the center coordinate of the key
     double centerX = topLeftX + keyWidth / 2;
     double centerY = topLeftY + keyHeight / 2;
 
@@ -204,9 +195,12 @@ class _CustomKeyboardState extends State<CustomKeyboardCopy> {
     double keyboardCenterX = keyboardWidth / 2;
     double keyboardCenterY = keyboardHeight / 2;
 
-    // Adjust the key coordinates to be relative to the center of the keyboard
+    // Calculate the key center relative to the keyboard center
     double relativeCenterX = centerX - keyboardCenterX;
     double relativeCenterY = centerY - keyboardCenterY;
+
+    // Inverting the Y-axis to follow conventional coordinate system
+    relativeCenterY = -relativeCenterY;
 
     return Offset(relativeCenterX, relativeCenterY);
   }
