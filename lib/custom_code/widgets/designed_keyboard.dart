@@ -27,7 +27,8 @@ class DesignedKeyboard extends StatefulWidget {
 
 class _CustomKeyboardState extends State<DesignedKeyboard> {
   String text = "";
-  bool isShiftEnabled = false;
+  bool isShiftEnabled = true;
+  bool isDoubleShiftEnabled = false;
   bool isNumKeypad = false;
   TextEditingController textController = TextEditingController();
   bool isKeyboardVisible = false;
@@ -37,12 +38,19 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   FocusNode textFocusNode = FocusNode();
   int cursorPosition = 0;
 
+  late DateTime lastShiftTap;
+  late File keyCoordinatesCSV;
+  late File inputCoordinatesCSV;
+
   @override
   void initState() {
     super.initState();
     textController = TextEditingController();
     scrollController = ScrollController();
     textFieldScrollController = ScrollController();
+    isShiftEnabled = false;
+    isDoubleShiftEnabled = false;
+    lastShiftTap = DateTime.now();
   }
 
   @override
@@ -71,17 +79,19 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   void copyAndExport() {
     Clipboard.setData(ClipboardData(text: text));
     exportCoordinatesToCSV();
+    exportKeyCoordinatesToCSV();
+    sendEmailWithCsvs(keyCoordinatesCSV, inputCoordinatesCSV);
     setState(() {
       isKeyboardVisible = false; // Hide the keyboard
     });
   }
 
-  Future<void> sendEmailWithCsv(File csvFile) async {
+  Future<void> sendEmailWithCsvs(File csvFile1, File csvFile2) async {
     final Email email = Email(
-      body: 'Here is your CSV file.',
-      subject: 'CSV File',
+      body: 'Here are your CSV files.',
+      subject: 'CSV Files',
       recipients: ['gdsc.yonsei.parkour@gmail.com'],
-      attachmentPaths: [csvFile.path],
+      attachmentPaths: [csvFile1.path, csvFile2.path], // Attach two files
       isHTML: false,
     );
 
@@ -89,35 +99,35 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   }
 
   void exportCoordinatesToCSV() async {
-    // Create a list of lists, where each inner list represents a row in the CSV file
+    final coordinatesList = coordinates
+        .map((e) => [
+              DateFormat('yyyy-MM-dd HH:mm:ss')
+                  .format(e.timestamp), // Format the timestamp
+              e.position.dx,
+              e.position.dy,
+              (e.isShiftEnabled || isDoubleShiftEnabled)
+                  ? 'true'
+                  : 'false', // Adjusted logic for isShiftEnabled
+              e.isNumKeypad ? 'true' : 'false',
+            ])
+        .toList();
+
     final List<List<dynamic>> csvData = [
-      // Define the headers
-      ['X', 'Y', 'Is Shift Enabled', 'Is Num Keypad'],
+      ['Timestamp', 'X', 'Y', 'Is Shift Enabled', 'Is Num Keypad'],
+      ...coordinatesList,
     ];
-
-    // Add the data from each KeyPressInfo object to the csvData list
-    csvData.addAll(coordinates.map((e) => [
-          e.position.dx,
-          e.position.dy,
-          e.isShiftEnabled.toString(),
-          e.isNumKeypad.toString(),
-        ]));
-
-    // Convert the data to CSV format
     final String csv = const ListToCsvConverter().convert(csvData);
 
     // Updated path to the project directory
     final Directory directory = await getApplicationDocumentsDirectory();
     final String filePath = '${directory.path}/coordinates.csv';
-
-    final File file = File(filePath);
-    await file.writeAsString(csv);
+    inputCoordinatesCSV = File(filePath);
+    await inputCoordinatesCSV.writeAsString(csv);
 
     var status = await Permission.storage.status;
     if (!status.isGranted) {
       await Permission.storage.request();
     }
-    await sendEmailWithCsv(file);
   }
 
   void onKeyTap(String key, DragDownDetails details) {
@@ -133,13 +143,29 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         position: Offset(100000.0, 100000.0),
         isShiftEnabled: isShiftEnabled,
         isNumKeypad: isNumKeypad,
+        timestamp: DateTime.now(),
       ));
     } else if (key == "↑") {
-      isShiftEnabled = !isShiftEnabled;
+      if (isDoubleShiftEnabled) {
+        isDoubleShiftEnabled = false;
+        isShiftEnabled = false;
+      } else {
+        DateTime now = DateTime.now();
+        if (now.difference(lastShiftTap).inMilliseconds < 300) {
+          // Double tap detected
+          isDoubleShiftEnabled = true;
+        } else {
+          // Single tap or time between taps is too long
+          isDoubleShiftEnabled = false;
+          isShiftEnabled = !isShiftEnabled;
+        }
+        lastShiftTap = now;
+      }
       coordinates.add(KeyPressInfo(
         position: Offset(200000.0, 200000.0),
         isShiftEnabled: isShiftEnabled,
         isNumKeypad: isNumKeypad,
+        timestamp: DateTime.now(),
       ));
     } else if (key == " " || key == "␣") {
       text = text.substring(0, cursorPosition) +
@@ -150,6 +176,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         position: Offset(400000.0, 400000.0),
         isShiftEnabled: isShiftEnabled,
         isNumKeypad: isNumKeypad,
+        timestamp: DateTime.now(),
       ));
       sendCoordinatesToServer(coordinates);
     } else if (key == "⏎") {
@@ -161,6 +188,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         position: Offset(300000.0, 300000.0),
         isShiftEnabled: isShiftEnabled,
         isNumKeypad: isNumKeypad,
+        timestamp: DateTime.now(),
       ));
     } else if (key == "<") {
       cursorPosition = max(0, cursorPosition - 1);
@@ -171,7 +199,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     } else if (key == "abc") {
       isNumKeypad = !isNumKeypad;
     } else {
-      String addText = isShiftEnabled ? key.toUpperCase() : key.toLowerCase();
+      String addText =
+          ((isShiftEnabled || isDoubleShiftEnabled) && !isSpecialKey(key))
+              ? key.toUpperCase()
+              : key.toLowerCase();
       text = text.substring(0, cursorPosition) +
           addText +
           text.substring(cursorPosition);
@@ -180,13 +211,14 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         position: relativePosition,
         isShiftEnabled: isShiftEnabled,
         isNumKeypad: isNumKeypad,
+        timestamp: DateTime.now(),
       ));
     }
 
     updateTextAndScroll(text);
     textController.text = text;
 
-    if (isShiftEnabled && !isSpecialKey(key)) {
+    if (isShiftEnabled && !isSpecialKey(key) && (!isDoubleShiftEnabled)) {
       isShiftEnabled = false;
     }
   }
@@ -230,6 +262,66 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         centerOfKeyboard.dy - globalPosition.dy);
   }
 
+  Offset getKeyCenter(String key) {
+    // Find the row index and the key's index within that row
+    int rowIndex = keys.indexWhere((row) => row.contains(key));
+    int keyIndexInRow = keys[rowIndex].indexOf(key);
+
+    // Calculate the width of the keyboard and each key
+    final double keyboardWidth = MediaQuery.of(context).size.width;
+    double keyWidth = keyboardWidth / keys[rowIndex].length;
+
+    // Correctly determine the keyboard height
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double keyboardHeight =
+        screenHeight * 0.4; // Assuming the keyboard occupies 40% of the screen
+
+    // Calculate the height of each key
+    double keyHeight = keyboardHeight / keys.length;
+
+    // Calculate the top-left coordinate of the key
+    double topLeftX = keyIndexInRow * keyWidth;
+    double topLeftY = rowIndex * keyHeight;
+
+    // Calculate the center coordinate of the key
+    double centerX = topLeftX + keyWidth / 2;
+    double centerY = topLeftY + keyHeight / 2;
+
+    // Calculate the center of the keyboard
+    double keyboardCenterX = keyboardWidth / 2;
+    double keyboardCenterY = keyboardHeight / 2;
+
+    // Calculate the key center relative to the keyboard center
+    double relativeCenterX = centerX - keyboardCenterX;
+    double relativeCenterY = centerY - keyboardCenterY;
+
+    // Inverting the Y-axis to follow the conventional coordinate system
+    relativeCenterY = -relativeCenterY;
+
+    return Offset(relativeCenterX, relativeCenterY);
+  }
+
+  // Calculate and export key coordinates to CSV
+  void exportKeyCoordinatesToCSV() async {
+    final Directory directory = await getApplicationDocumentsDirectory();
+    final String filePath = '${directory.path}/key_coordinates.csv';
+    keyCoordinatesCSV = File(filePath);
+
+    List<List<dynamic>> csvData = [
+      ['Key', 'Center X', 'Center Y'],
+    ];
+
+    for (var row in keys) {
+      for (var key in row) {
+        final keyCenter = getKeyCenter(key);
+        csvData.add([key, keyCenter.dx, keyCenter.dy]);
+      }
+    }
+
+    String csv = const ListToCsvConverter().convert(csvData);
+    await keyCoordinatesCSV.writeAsString(csv);
+  }
+
   double get keyHeight => isKeyboardVisible
       ? (widget.height ?? MediaQuery.of(context).size.height) *
           0.4 /
@@ -251,7 +343,9 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             color: Colors.grey[200],
           ),
           child: Text(
-            key,
+            (isShiftEnabled || isDoubleShiftEnabled) && !isSpecialKey(key)
+                ? key.toUpperCase()
+                : key.toLowerCase(),
             style: TextStyle(fontSize: 20),
           ),
         ),
@@ -272,10 +366,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             color: Colors.grey[200],
           ),
           child: Text(
-            isShiftEnabled && !isSpecialKey(key)
+            ((isShiftEnabled || isDoubleShiftEnabled) && !isSpecialKey(key))
                 ? key.toUpperCase()
                 : key.toLowerCase(),
-            style: TextStyle(fontSize: 25),
+            style: TextStyle(fontSize: 28),
           ),
         ),
       ),
@@ -289,7 +383,8 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         key == "<" ||
         key == ">" ||
         key == "123" ||
-        key == "*/?";
+        key == "*/?" ||
+        key == "abc";
   }
 
   @override
@@ -303,6 +398,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     final textFieldHeight = screenHeight -
         keyboardHeight -
         48; // 48 is the height of the copy button
+    isShiftEnabled = text.isEmpty;
 
     return Column(
       children: [
@@ -409,9 +505,12 @@ class KeyPressInfo {
   final Offset position;
   final bool isShiftEnabled;
   final bool isNumKeypad;
+  final DateTime timestamp;
 
-  KeyPressInfo(
-      {required this.position,
-      required this.isShiftEnabled,
-      required this.isNumKeypad});
+  KeyPressInfo({
+    required this.position,
+    required this.isShiftEnabled,
+    required this.isNumKeypad,
+    required this.timestamp,
+  });
 }
