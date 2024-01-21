@@ -105,7 +105,7 @@ class _NavBarPageState extends State<NavBarPage> {
   Widget build(BuildContext context) {
     final tabs = {
       'Keyboard': const KeyboardWidget(),
-      'Blank': const BlankWidget(),
+      'Basic': const BasicWidget(),
     };
     final currentIndex = tabs.keys.toList().indexOf(_currentPageName);
 

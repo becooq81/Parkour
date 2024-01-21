@@ -45,15 +45,15 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
               : const KeyboardWidget(),
         ),
         FFRoute(
-          name: 'Blank',
-          path: '/blank',
-          builder: (context, params) =>
-              params.isEmpty ? const NavBarPage(initialPage: 'Blank') : const BlankWidget(),
-        ),
-        FFRoute(
           name: 'korean',
           path: '/korean',
           builder: (context, params) => const KoreanWidget(),
+        ),
+        FFRoute(
+          name: 'Basic',
+          path: '/basic',
+          builder: (context, params) =>
+              params.isEmpty ? const NavBarPage(initialPage: 'Basic') : const BasicWidget(),
         )
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );
