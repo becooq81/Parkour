@@ -74,7 +74,7 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
               SizedBox(
                 width: MediaQuery.sizeOf(context).width * 1.0,
                 height: MediaQuery.sizeOf(context).height * 0.8,
-                child: custom_widgets.DesignedKeyboard(
+                child: custom_widgets.CustomKeyboardCopy(
                   width: MediaQuery.sizeOf(context).width * 1.0,
                   height: MediaQuery.sizeOf(context).height * 0.8,
                 ),
