@@ -87,7 +87,7 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
             color: Colors.grey[200],
           ),
           child: Text(
-            isShiftEnabled && !isSpecialKey(key)
+            isShiftEnabled && !isControlKey(key)
                 ? key.toUpperCase()
                 : key.toLowerCase(),
             style: TextStyle(fontSize: 16),
@@ -97,7 +97,7 @@ class _CustomKeyboardState extends State<CustomKeyboard> {
     );
   }
 
-  bool isSpecialKey(String key) {
+  bool isControlKey(String key) {
     return key == "↑" || key == "←" || key == " ";
   }
 
