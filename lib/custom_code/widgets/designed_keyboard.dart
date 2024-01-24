@@ -227,7 +227,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         timestamp: DateTime.now(),
         key: "ENTER",
       ));
-    } else if (key == "<") {
+    } else if (key == "◂") {
       cursorPosition = max(0, cursorPosition - 1);
       coordinates.add(KeyPressInfo(
         position: Offset(500000.0, 500000.0),
@@ -240,7 +240,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         timestamp: DateTime.now(),
         key: "MOVE CURSOR LEFT",
       ));
-    } else if (key == ">") {
+    } else if (key == "▸") {
       cursorPosition = min(text.length, cursorPosition + 1);
       coordinates.add(KeyPressInfo(
         position: Offset(600000.0, 600000.0),
@@ -555,8 +555,8 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     return key == "↑" ||
         key == "←" ||
         key == " " ||
-        key == "<" ||
-        key == ">" ||
+        key == "◂" ||
+        key == "▸" ||
         key == "123" ||
         key == "#?!" ||
         key == "abc" ||
@@ -702,14 +702,14 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
     ["Z", "X", "C", "V", "B", "N", "M"],
     ["↑", " ", ".", "←"],
-    ["123", "#?!", "⏎", "<", ">"]
+    ["123", "#?!", "⏎", "◂", "▸"]
   ];
 
   List<List<String>> numKeys = [
     ["1", "2", "3", "-"],
     ["4", "5", "6", "␣"],
     ["7", "8", "9", "⏎"],
-    ["abc", "#?!", "<", ">"]
+    ["abc", "#?!", "◂", "▸"]
   ];
 
   List<List<String>> firstSpecialKeys = [
@@ -717,7 +717,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     ["!", "@", "\$", "%", "^", "*"],
     ["-", "\'", "\"", ",", "?"],
     ["1/2", " ", ".", "←"],
-    ["abc", "123", "⏎", "<", ">"]
+    ["abc", "123", "⏎", "◂", "▸"]
   ];
 
   List<List<String>> secSpecialKeys = [
@@ -725,7 +725,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     ["€", "£", "[", "]", "<", ">"],
     [":", ";", "&", "¡", "¿"],
     ["2/2", " ", ".", "←"],
-    ["abc", "123", "⏎", "<", ">"]
+    ["abc", "123", "⏎", "◂", "▸"]
   ];
 }
 
