@@ -29,7 +29,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   String text = "";
   bool isShiftEnabled = true;
   bool isDoubleShiftEnabled = false;
+  bool isAlphabetKeypad = true;
   bool isNumKeypad = false;
+  bool isFirstSpecialKeypad = false;
+  bool isSecSpecialKeypad = false;
   TextEditingController textController = TextEditingController();
   bool isKeyboardVisible = false;
   List<KeyPressInfo> coordinates = [];
@@ -104,7 +107,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
               e.position.dy,
               e.isShiftEnabled,
               e.isDoubleShiftEnabled,
-              e.isNumKeypad ? 'true' : 'false',
+              e.isAlphabetKeypad,
+              e.isNumKeypad,
+              e.isFirstSpecialKeypad,
+              e.isSecSpecialKeypad,
               e.key,
             ])
         .toList();
@@ -116,7 +122,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         'Y',
         'Is Shift Enabled',
         'Is Double Shift Enabled',
-        'Is Num Keypad',
+        'Is Alphabet Keypad'
+            'Is Num Keypad',
+        'Is Special Keypad',
+        'Is Second Special Keypad',
         'Key value'
       ],
       ...coordinatesList,
@@ -148,7 +157,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         position: Offset(100000.0, 100000.0),
         isShiftEnabled: isShiftEnabled,
         isDoubleShiftEnabled: isDoubleShiftEnabled,
+        isAlphabetKeypad: isAlphabetKeypad,
         isNumKeypad: isNumKeypad,
+        isFirstSpecialKeypad: isFirstSpecialKeypad,
+        isSecSpecialKeypad: isSecSpecialKeypad,
         timestamp: DateTime.now(),
         key: "BACKSPACE",
       ));
@@ -172,7 +184,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         position: Offset(200000.0, 200000.0),
         isShiftEnabled: isShiftEnabled,
         isDoubleShiftEnabled: isDoubleShiftEnabled,
+        isAlphabetKeypad: isAlphabetKeypad,
         isNumKeypad: isNumKeypad,
+        isFirstSpecialKeypad: isFirstSpecialKeypad,
+        isSecSpecialKeypad: isSecSpecialKeypad,
         timestamp: DateTime.now(),
         key: "SHIFT",
       ));
@@ -181,11 +196,17 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
           " " +
           text.substring(cursorPosition);
       cursorPosition++;
+      if (text.isNotEmpty && text.endsWith('.')) {
+        isShiftEnabled = true;
+      }
       coordinates.add(KeyPressInfo(
         position: Offset(400000.0, 400000.0),
         isShiftEnabled: isShiftEnabled,
         isDoubleShiftEnabled: isDoubleShiftEnabled,
+        isAlphabetKeypad: isAlphabetKeypad,
         isNumKeypad: isNumKeypad,
+        isFirstSpecialKeypad: isFirstSpecialKeypad,
+        isSecSpecialKeypad: isSecSpecialKeypad,
         timestamp: DateTime.now(),
         key: "SPACEBAR",
       ));
@@ -199,7 +220,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         position: Offset(300000.0, 300000.0),
         isShiftEnabled: isShiftEnabled,
         isDoubleShiftEnabled: isDoubleShiftEnabled,
+        isAlphabetKeypad: isAlphabetKeypad,
         isNumKeypad: isNumKeypad,
+        isFirstSpecialKeypad: isFirstSpecialKeypad,
+        isSecSpecialKeypad: isSecSpecialKeypad,
         timestamp: DateTime.now(),
         key: "ENTER",
       ));
@@ -209,7 +233,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         position: Offset(500000.0, 500000.0),
         isShiftEnabled: isShiftEnabled,
         isDoubleShiftEnabled: isDoubleShiftEnabled,
+        isAlphabetKeypad: isAlphabetKeypad,
         isNumKeypad: isNumKeypad,
+        isFirstSpecialKeypad: isFirstSpecialKeypad,
+        isSecSpecialKeypad: isSecSpecialKeypad,
         timestamp: DateTime.now(),
         key: "MOVE CURSOR LEFT",
       ));
@@ -219,29 +246,80 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         position: Offset(600000.0, 600000.0),
         isShiftEnabled: isShiftEnabled,
         isDoubleShiftEnabled: isDoubleShiftEnabled,
+        isAlphabetKeypad: isAlphabetKeypad,
         isNumKeypad: isNumKeypad,
+        isFirstSpecialKeypad: isFirstSpecialKeypad,
+        isSecSpecialKeypad: isSecSpecialKeypad,
         timestamp: DateTime.now(),
         key: "MOVE CURSOR RIGHT",
       ));
     } else if (key == "123") {
-      isNumKeypad = !isNumKeypad;
+      isNumKeypad = true;
+      isFirstSpecialKeypad = false;
+      isSecSpecialKeypad = false;
+      isAlphabetKeypad = false;
+
       coordinates.add(KeyPressInfo(
         position: Offset(700000.0, 700000.0),
         isShiftEnabled: isShiftEnabled,
         isDoubleShiftEnabled: isDoubleShiftEnabled,
+        isAlphabetKeypad: isAlphabetKeypad,
         isNumKeypad: isNumKeypad,
+        isFirstSpecialKeypad: isFirstSpecialKeypad,
+        isSecSpecialKeypad: isSecSpecialKeypad,
         timestamp: DateTime.now(),
         key: "CHANGE TO NUMKEYPAD",
       ));
     } else if (key == "abc") {
-      isNumKeypad = !isNumKeypad;
+      isNumKeypad = false;
+      isFirstSpecialKeypad = false;
+      isSecSpecialKeypad = false;
+      isAlphabetKeypad = true;
+
       coordinates.add(KeyPressInfo(
         position: Offset(800000.0, 800000.0),
         isShiftEnabled: isShiftEnabled,
         isDoubleShiftEnabled: isDoubleShiftEnabled,
+        isAlphabetKeypad: isAlphabetKeypad,
         isNumKeypad: isNumKeypad,
+        isFirstSpecialKeypad: isFirstSpecialKeypad,
+        isSecSpecialKeypad: isSecSpecialKeypad,
         timestamp: DateTime.now(),
         key: "CHANGE TO ALPHABET KEYPAD",
+      ));
+    } else if (key == "#?!" || key == "2/2") {
+      isNumKeypad = false;
+      isFirstSpecialKeypad = true;
+      isSecSpecialKeypad = false;
+      isAlphabetKeypad = false;
+
+      coordinates.add(KeyPressInfo(
+        position: Offset(900000.0, 900000.0),
+        isShiftEnabled: isShiftEnabled,
+        isDoubleShiftEnabled: isDoubleShiftEnabled,
+        isAlphabetKeypad: isAlphabetKeypad,
+        isNumKeypad: isNumKeypad,
+        isFirstSpecialKeypad: isFirstSpecialKeypad,
+        isSecSpecialKeypad: isSecSpecialKeypad,
+        timestamp: DateTime.now(),
+        key: "CHANGE TO FIRST SPECIAL KEYPAD",
+      ));
+    } else if (key == "1/2") {
+      isNumKeypad = false;
+      isFirstSpecialKeypad = false;
+      isSecSpecialKeypad = true;
+      isAlphabetKeypad = false;
+
+      coordinates.add(KeyPressInfo(
+        position: Offset(1900000.0, 1900000.0),
+        isShiftEnabled: isShiftEnabled,
+        isDoubleShiftEnabled: isDoubleShiftEnabled,
+        isAlphabetKeypad: isAlphabetKeypad,
+        isNumKeypad: isNumKeypad,
+        isFirstSpecialKeypad: isFirstSpecialKeypad,
+        isSecSpecialKeypad: isSecSpecialKeypad,
+        timestamp: DateTime.now(),
+        key: "CHANGE TO SECOND SPECIAL KEYPAD",
       ));
     } else {
       String addText = (isShiftEnabled || isDoubleShiftEnabled)
@@ -255,7 +333,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         position: relativePosition,
         isShiftEnabled: isShiftEnabled,
         isDoubleShiftEnabled: isDoubleShiftEnabled,
+        isAlphabetKeypad: isAlphabetKeypad,
         isNumKeypad: isNumKeypad,
+        isFirstSpecialKeypad: isFirstSpecialKeypad,
+        isSecSpecialKeypad: isSecSpecialKeypad,
         timestamp: DateTime.now(),
         key: addText,
       ));
@@ -264,7 +345,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     updateTextAndScroll(text);
     textController.text = text;
 
-    if (isShiftEnabled && !isSpecialKey(key) && (!isDoubleShiftEnabled)) {
+    if (isShiftEnabled && !isControlKey(key) && (!isDoubleShiftEnabled)) {
       isShiftEnabled = false;
     }
   }
@@ -437,7 +518,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             color: Colors.grey[200],
           ),
           child: Text(
-            (isShiftEnabled || isDoubleShiftEnabled) && !isSpecialKey(key)
+            (isShiftEnabled || isDoubleShiftEnabled) && !isControlKey(key)
                 ? key.toUpperCase()
                 : key.toLowerCase(),
             style: TextStyle(fontSize: 20),
@@ -460,7 +541,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             color: Colors.grey[200],
           ),
           child: Text(
-            ((isShiftEnabled || isDoubleShiftEnabled) && !isSpecialKey(key))
+            ((isShiftEnabled || isDoubleShiftEnabled) && !isControlKey(key))
                 ? key.toUpperCase()
                 : key.toLowerCase(),
             style: TextStyle(fontSize: 28),
@@ -470,15 +551,17 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     );
   }
 
-  bool isSpecialKey(String key) {
+  bool isControlKey(String key) {
     return key == "↑" ||
         key == "←" ||
         key == " " ||
         key == "<" ||
         key == ">" ||
         key == "123" ||
-        key == "*/?" ||
-        key == "abc";
+        key == "#?!" ||
+        key == "abc" ||
+        key == "1/2" ||
+        key == "2/2";
   }
 
   @override
@@ -540,7 +623,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         ),
 
         // Keyboard
-        if (isKeyboardVisible && !isNumKeypad)
+        if (isKeyboardVisible && isAlphabetKeypad)
           SizedBox(
               height: keyboardHeight,
               width: double.infinity,
@@ -574,6 +657,42 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                   },
                 ),
               )),
+        if (isKeyboardVisible && isFirstSpecialKeypad)
+          SizedBox(
+              height: keyboardHeight,
+              width: double.infinity,
+              child: Container(
+                child: ListView.builder(
+                  controller: scrollController,
+                  itemCount: firstSpecialKeys.length,
+                  itemBuilder: (context, index) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: firstSpecialKeys[index]
+                          .map((key) => buildKey(key))
+                          .toList(),
+                    );
+                  },
+                ),
+              )),
+        if (isKeyboardVisible && isSecSpecialKeypad)
+          SizedBox(
+              height: keyboardHeight,
+              width: double.infinity,
+              child: Container(
+                child: ListView.builder(
+                  controller: scrollController,
+                  itemCount: secSpecialKeys.length,
+                  itemBuilder: (context, index) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: secSpecialKeys[index]
+                          .map((key) => buildKey(key))
+                          .toList(),
+                    );
+                  },
+                ),
+              )),
       ],
     );
   }
@@ -583,14 +702,30 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
     ["Z", "X", "C", "V", "B", "N", "M"],
     ["↑", " ", ".", "←"],
-    ["123", "*/?", "⏎", "<", ">"]
+    ["123", "#?!", "⏎", "<", ">"]
   ];
 
   List<List<String>> numKeys = [
     ["1", "2", "3", "-"],
     ["4", "5", "6", "␣"],
     ["7", "8", "9", "⏎"],
-    ["abc", "*/?", "<", ">"]
+    ["abc", "#?!", "<", ">"]
+  ];
+
+  List<List<String>> firstSpecialKeys = [
+    ["+", "=", "/", "_", "(", ")"],
+    ["!", "@", "\$", "%", "^", "*"],
+    ["-", "\'", "\"", ",", "?"],
+    ["1/2", " ", ".", "←"],
+    ["abc", "123", "⏎", "<", ">"]
+  ];
+
+  List<List<String>> secSpecialKeys = [
+    ["~", "\\", "|", "#", "{", "}"],
+    ["€", "£", "[", "]", "<", ">"],
+    [":", ";", "&", "¡", "¿"],
+    ["2/2", " ", ".", "←"],
+    ["abc", "123", "⏎", "<", ">"]
   ];
 }
 
@@ -598,7 +733,10 @@ class KeyPressInfo {
   final Offset position;
   final bool isShiftEnabled;
   final bool isDoubleShiftEnabled;
+  final bool isAlphabetKeypad;
   final bool isNumKeypad;
+  final bool isFirstSpecialKeypad;
+  final bool isSecSpecialKeypad;
   final DateTime timestamp;
   final String key;
 
@@ -606,7 +744,10 @@ class KeyPressInfo {
     required this.position,
     required this.isShiftEnabled,
     required this.isDoubleShiftEnabled,
+    required this.isAlphabetKeypad,
     required this.isNumKeypad,
+    required this.isFirstSpecialKeypad,
+    required this.isSecSpecialKeypad,
     required this.timestamp,
     required this.key,
   });

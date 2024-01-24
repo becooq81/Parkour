@@ -51,21 +51,6 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        appBar: AppBar(
-          backgroundColor: FlutterFlowTheme.of(context).primary,
-          automaticallyImplyLeading: false,
-          title: Text(
-            'Designed Keyboard',
-            style: FlutterFlowTheme.of(context).headlineMedium.override(
-                  fontFamily: 'Outfit',
-                  color: Colors.white,
-                  fontSize: 22.0,
-                ),
-          ),
-          actions: const [],
-          centerTitle: false,
-          elevation: 2.0,
-        ),
         body: SafeArea(
           top: true,
           child: Column(
@@ -73,10 +58,10 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
             children: [
               SizedBox(
                 width: MediaQuery.sizeOf(context).width * 1.0,
-                height: MediaQuery.sizeOf(context).height * 0.8,
+                height: MediaQuery.sizeOf(context).height * 0.9,
                 child: custom_widgets.DesignedKeyboard(
                   width: MediaQuery.sizeOf(context).width * 1.0,
-                  height: MediaQuery.sizeOf(context).height * 0.8,
+                  height: MediaQuery.sizeOf(context).height * 0.9,
                 ),
               ),
             ],
