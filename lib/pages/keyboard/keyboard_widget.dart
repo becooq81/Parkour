@@ -10,7 +10,7 @@ class KeyboardWidget extends StatefulWidget {
   const KeyboardWidget({super.key});
 
   @override
-  _KeyboardWidgetState createState() => _KeyboardWidgetState();
+  State<KeyboardWidget> createState() => _KeyboardWidgetState();
 }
 
 class _KeyboardWidgetState extends State<KeyboardWidget> {
@@ -58,10 +58,10 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
             children: [
               SizedBox(
                 width: MediaQuery.sizeOf(context).width * 1.0,
-                height: MediaQuery.sizeOf(context).height * 0.9,
+                height: MediaQuery.sizeOf(context).height * 1.0,
                 child: custom_widgets.DesignedKeyboard(
                   width: MediaQuery.sizeOf(context).width * 1.0,
-                  height: MediaQuery.sizeOf(context).height * 0.9,
+                  height: MediaQuery.sizeOf(context).height * 1.0,
                 ),
               ),
             ],

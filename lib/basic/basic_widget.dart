@@ -10,7 +10,7 @@ class BasicWidget extends StatefulWidget {
   const BasicWidget({super.key});
 
   @override
-  _BasicWidgetState createState() => _BasicWidgetState();
+  State<BasicWidget> createState() => _BasicWidgetState();
 }
 
 class _BasicWidgetState extends State<BasicWidget> {

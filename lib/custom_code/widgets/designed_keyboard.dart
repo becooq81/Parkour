@@ -40,11 +40,9 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   ScrollController textFieldScrollController = ScrollController();
   FocusNode textFocusNode = FocusNode();
   int cursorPosition = 0;
-
   late DateTime lastShiftTap;
   late File keyCoordinatesCSV;
   late File inputCoordinatesCSV;
-
   @override
   void initState() {
     super.initState();
@@ -67,7 +65,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       text = newText;
       textController.text = text;
     });
-
     // Schedule a callback for the end of this frame to scroll to the bottom
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (textFieldScrollController.hasClients) {
@@ -95,7 +92,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       attachmentPaths: [csvFile1.path, csvFile2.path], // Attach two files
       isHTML: false,
     );
-
     await FlutterEmailSender.send(email);
   }
 
@@ -114,7 +110,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
               e.key,
             ])
         .toList();
-
     final List<List<dynamic>> csvData = [
       [
         'Timestamp',
@@ -131,13 +126,11 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       ...coordinatesList,
     ];
     final String csv = const ListToCsvConverter().convert(csvData);
-
     // Updated path to the project directory
     final Directory directory = await getApplicationDocumentsDirectory();
     final String filePath = '${directory.path}/coordinates.csv';
     inputCoordinatesCSV = File(filePath);
     await inputCoordinatesCSV.writeAsString(csv);
-
     var status = await Permission.storage.status;
     if (!status.isGranted) {
       await Permission.storage.request();
@@ -258,7 +251,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       isFirstSpecialKeypad = false;
       isSecSpecialKeypad = false;
       isAlphabetKeypad = false;
-
       coordinates.add(KeyPressInfo(
         position: Offset(700000.0, 700000.0),
         isShiftEnabled: isShiftEnabled,
@@ -275,7 +267,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       isFirstSpecialKeypad = false;
       isSecSpecialKeypad = false;
       isAlphabetKeypad = true;
-
       coordinates.add(KeyPressInfo(
         position: Offset(800000.0, 800000.0),
         isShiftEnabled: isShiftEnabled,
@@ -292,7 +283,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       isFirstSpecialKeypad = true;
       isSecSpecialKeypad = false;
       isAlphabetKeypad = false;
-
       coordinates.add(KeyPressInfo(
         position: Offset(900000.0, 900000.0),
         isShiftEnabled: isShiftEnabled,
@@ -309,7 +299,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       isFirstSpecialKeypad = false;
       isSecSpecialKeypad = true;
       isAlphabetKeypad = false;
-
       coordinates.add(KeyPressInfo(
         position: Offset(1900000.0, 1900000.0),
         isShiftEnabled: isShiftEnabled,
@@ -341,10 +330,8 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         key: addText,
       ));
     }
-
     updateTextAndScroll(text);
     textController.text = text;
-
     if (isShiftEnabled && !isControlKey(key) && (!isDoubleShiftEnabled)) {
       isShiftEnabled = false;
     }
@@ -393,38 +380,29 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     // Find the row index and the key's index within that row
     int rowIndex = keys.indexWhere((row) => row.contains(key));
     int keyIndexInRow = keys[rowIndex].indexOf(key);
-
     // Calculate the width of the keyboard and each key
     final double keyboardWidth = MediaQuery.of(context).size.width;
     double keyWidth = keyboardWidth / keys[rowIndex].length;
-
     // Correctly determine the keyboard height
     final double screenHeight = MediaQuery.of(context).size.height;
     final double keyboardHeight =
         screenHeight * 0.4; // Assuming the keyboard occupies 40% of the screen
-
     // Calculate the height of each key
     double keyHeight = keyboardHeight / keys.length;
-
     // Calculate the top-left coordinate of the key
     double topLeftX = keyIndexInRow * keyWidth;
     double topLeftY = rowIndex * keyHeight;
-
     // Calculate the center coordinate of the key
     double centerX = topLeftX + keyWidth / 2;
     double centerY = topLeftY + keyHeight / 2;
-
     // Calculate the center of the keyboard
     double keyboardCenterX = keyboardWidth / 2;
     double keyboardCenterY = keyboardHeight / 2;
-
     // Calculate the key center relative to the keyboard center
     double relativeCenterX = centerX - keyboardCenterX;
     double relativeCenterY = centerY - keyboardCenterY;
-
     // Inverting the Y-axis to follow the conventional coordinate system
     relativeCenterY = -relativeCenterY;
-
     return Offset(relativeCenterX, relativeCenterY);
   }
 
@@ -432,38 +410,29 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     // Find the row index and the key's index within that row for the number keypad
     int rowIndex = numKeys.indexWhere((row) => row.contains(key));
     int keyIndexInRow = numKeys[rowIndex].indexOf(key);
-
     // Assuming different dimensions for number keys, calculate their width and height
     final double keyboardWidth = MediaQuery.of(context).size.width;
     double keyWidth = keyboardWidth / numKeys[rowIndex].length;
-
     // Assuming the number keypad occupies a different portion of the screen
     final double screenHeight = MediaQuery.of(context).size.height;
     final double keyboardHeight =
         screenHeight * 0.3; // Example: 30% of the screen
-
     // Calculate the height of each key in the number keypad
     double keyHeight = keyboardHeight / numKeys.length;
-
     // Calculate the top-left coordinate of the key in the number keypad
     double topLeftX = keyIndexInRow * keyWidth;
     double topLeftY = rowIndex * keyHeight;
-
     // Calculate the center coordinate of the key
     double centerX = topLeftX + keyWidth / 2;
     double centerY = topLeftY + keyHeight / 2;
-
     // Calculate the center of the keyboard
     double keyboardCenterX = keyboardWidth / 2;
     double keyboardCenterY = keyboardHeight / 2;
-
     // Calculate the key center relative to the keyboard center
     double relativeCenterX = centerX - keyboardCenterX;
     double relativeCenterY = centerY - keyboardCenterY;
-
     // Inverting the Y-axis to follow the conventional coordinate system
     relativeCenterY = -relativeCenterY;
-
     return Offset(relativeCenterX, relativeCenterY);
   }
 
@@ -472,18 +441,15 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     final Directory directory = await getApplicationDocumentsDirectory();
     final String filePath = '${directory.path}/key_coordinates.csv';
     keyCoordinatesCSV = File(filePath);
-
     List<List<dynamic>> csvData = [
       ['Key', 'Center X', 'Center Y'],
     ];
-
     for (var row in keys) {
       for (var key in row) {
         final keyCenter = getKeyCenter(key);
         csvData.add([key, keyCenter.dx, keyCenter.dy]);
       }
     }
-
     // Add coordinates for number keys
     for (var row in numKeys) {
       for (var key in row) {
@@ -492,7 +458,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         csvData.add([key, keyCenter.dx, keyCenter.dy]);
       }
     }
-
     String csv = const ListToCsvConverter().convert(csvData);
     await keyCoordinatesCSV.writeAsString(csv);
   }
@@ -502,7 +467,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
           0.4 /
           keys.length
       : 0;
-
   Widget buildKey(String key) {
     int flexFactor = (key == " ") ? 3 : 1;
     return Expanded(
@@ -569,15 +533,91 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     final double screenHeight =
         widget.height?.toDouble() ?? MediaQuery.of(context).size.height;
     final double keyboardHeight = isKeyboardVisible
-        ? (screenHeight * 0.45)
+        ? (screenHeight * 0.5)
         : 0; // Keyboard occupies 50% of screen
-
+    final double navBarHeight = screenHeight * 0.065;
     final textFieldHeight = screenHeight -
         keyboardHeight -
+        navBarHeight -
         48; // 48 is the height of the copy button
-
     return Column(
       children: [
+        // Navigation Bar
+        Container(
+          height: navBarHeight,
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 6),
+          decoration: BoxDecoration(
+            color: Colors.white, // You can change the background color
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 1,
+                blurRadius: 3,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize:
+                    MainAxisSize.min, // To keep the row size to a minimum
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.arrow_back),
+                    iconSize: 28.0,
+                    onPressed: () {
+                      // Handle navigation to previous page here
+                    },
+                  ),
+                  SizedBox(width: 22),
+                  Text(
+                    'Keyboard',
+                    style: TextStyle(
+                      fontSize: 23.0,
+                      fontWeight: FontWeight.w500, // Semi-bold font weight
+                      // Add other styling properties if needed
+                    ),
+                  ), // The separated text
+                ],
+              ),
+              SizedBox(width: 38),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    text = '';
+                    textController.text = text;
+                  });
+                },
+                child: Text(
+                  'Clear',
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  backgroundColor: Color(0xff4285F4),
+                  foregroundColor: Colors.white, // Text color
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10), // Rounded corners
+                  ),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 18), // Thicker button
+                ),
+              ),
+              SizedBox(width: 3), // Add some spacing if needed
+              IconButton(
+                icon: Icon(Icons.settings),
+                iconSize: 30.0, // Size of the settings icon
+                onPressed: () {
+                  // Navigate to settings page here
+                },
+              ),
+            ],
+          ),
+        ),
         // Text Field Container
         Container(
           height: textFieldHeight,
@@ -606,14 +646,17 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             ),
           ),
         ),
-
         // Copy & Export Button
         InkWell(
           onTap: copyAndExport,
           child: Container(
             width: double.infinity,
             height: 48,
-            color: Colors.blue,
+            margin: EdgeInsets.symmetric(horizontal: 6.0),
+            decoration: BoxDecoration(
+              color: Color(0xff4285F4),
+              borderRadius: BorderRadius.circular(10), // Rounded corners
+            ),
             alignment: Alignment.center,
             child: Text(
               "Copy",
@@ -621,7 +664,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             ),
           ),
         ),
-
         // Keyboard
         if (isKeyboardVisible && isAlphabetKeypad)
           SizedBox(
@@ -704,14 +746,12 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     ["↑", " ", ".", "←"],
     ["123", "#?!", "⏎", "◂", "▸"]
   ];
-
   List<List<String>> numKeys = [
     ["1", "2", "3", "-"],
     ["4", "5", "6", "␣"],
     ["7", "8", "9", "⏎"],
     ["abc", "#?!", "◂", "▸"]
   ];
-
   List<List<String>> firstSpecialKeys = [
     ["+", "=", "/", "_", "(", ")"],
     ["!", "@", "\$", "%", "^", "*"],
@@ -719,7 +759,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     ["1/2", " ", ".", "←"],
     ["abc", "123", "⏎", "◂", "▸"]
   ];
-
   List<List<String>> secSpecialKeys = [
     ["~", "\\", "|", "#", "{", "}"],
     ["€", "£", "[", "]", "<", ">"],
@@ -739,7 +778,6 @@ class KeyPressInfo {
   final bool isSecSpecialKeypad;
   final DateTime timestamp;
   final String key;
-
   KeyPressInfo({
     required this.position,
     required this.isShiftEnabled,
