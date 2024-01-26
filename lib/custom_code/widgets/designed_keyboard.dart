@@ -40,9 +40,12 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   ScrollController textFieldScrollController = ScrollController();
   FocusNode textFocusNode = FocusNode();
   int cursorPosition = 0;
+
+  late double keyboardHeight;
   late DateTime lastShiftTap;
   late File keyCoordinatesCSV;
   late File inputCoordinatesCSV;
+
   @override
   void initState() {
     super.initState();
@@ -407,6 +410,11 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   }
 
   Offset getKeyCenterForNumPad(String key) {
+    final double screenHeight =
+        widget.height?.toDouble() ?? MediaQuery.of(context).size.height;
+    final double screenWidth =
+        widget.width?.toDouble() ?? MediaQuery.of(context).size.width;
+
     // Find the row index and the key's index within that row for the number keypad
     int rowIndex = numKeys.indexWhere((row) => row.contains(key));
     int keyIndexInRow = numKeys[rowIndex].indexOf(key);
@@ -414,7 +422,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     final double keyboardWidth = MediaQuery.of(context).size.width;
     double keyWidth = keyboardWidth / numKeys[rowIndex].length;
     // Assuming the number keypad occupies a different portion of the screen
-    final double screenHeight = MediaQuery.of(context).size.height;
     final double keyboardHeight =
         screenHeight * 0.3; // Example: 30% of the screen
     // Calculate the height of each key in the number keypad
@@ -462,53 +469,180 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     await keyCoordinatesCSV.writeAsString(csv);
   }
 
-  double get keyHeight => isKeyboardVisible
-      ? (widget.height ?? MediaQuery.of(context).size.height) *
-          0.4 /
-          keys.length
-      : 0;
-  Widget buildKey(String key) {
-    int flexFactor = (key == " ") ? 3 : 1;
-    return Expanded(
-      flex: flexFactor,
-      child: GestureDetector(
-        onPanDown: (details) => onKeyTap(key, details),
-        child: Container(
-          height: keyHeight,
-          alignment: Alignment.center,
-          margin: EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.black54),
-            color: Colors.grey[200],
-          ),
-          child: Text(
-            (isShiftEnabled || isDoubleShiftEnabled) && !isControlKey(key)
-                ? key.toUpperCase()
-                : key.toLowerCase(),
-            style: TextStyle(fontSize: 20),
+  double getKeyHeight(List<List<String>> keys) {
+    final double screenHeight =
+        widget.height?.toDouble() ?? MediaQuery.of(context).size.height;
+
+    final double exHeight = 892;
+
+    if (isKeyboardVisible) {
+      if (isNumKeypad) {
+        return 58 / exHeight * screenHeight;
+      } else {
+        return 42 / exHeight * screenHeight;
+      }
+    } else {
+      return 0;
+    }
+  }
+
+  Widget buildKey(List<List<String>> keys, String key) {
+    final double screenHeight =
+        widget.height?.toDouble() ?? MediaQuery.of(context).size.height;
+    final double screenWidth =
+        widget.width?.toDouble() ?? MediaQuery.of(context).size.width;
+
+    final double exHeight = 892.0;
+    final double exWidth = 412.0;
+
+    double keyWidth = screenWidth * 30.0 / exWidth;
+    double customFontSize = 22.0 / exHeight * screenHeight;
+    if (key == " ") {
+      keyWidth = screenWidth * 150.0 / exWidth;
+    } else if (key == "↑") {
+      keyWidth = screenWidth * 0.20873786407;
+      if (isDoubleShiftEnabled || isShiftEnabled) {
+        customFontSize = screenHeight * 0.030;
+      }
+    } else if (key == "←") {
+      keyWidth = screenWidth * 89.0 / exWidth;
+    } else if (key == "123" || key == "#?!" || key == "abc") {
+      keyWidth = screenWidth * 64.0 / exWidth;
+    } else if (key == "⏎") {
+      keyWidth = screenWidth * 100.0 / exWidth;
+    } else if (key == "◂" || key == "▸") {
+      keyWidth = screenWidth * 45.0 / exWidth;
+      customFontSize = screenHeight * 30.0 / exHeight;
+    } else if (keys[1].contains(key)) {
+      keyWidth = screenWidth * 34.0 / exWidth;
+    } else if (keys[2].contains(key)) {
+      keyWidth = screenWidth * 37.0 / exWidth;
+    }
+
+    return GestureDetector(
+      onPanDown: (details) => onKeyTap(key, details),
+      child: Container(
+        width: keyWidth,
+        height: getKeyHeight(keys),
+        alignment: Alignment.center,
+        margin: EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Color(0xffE0EAF9),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          (isShiftEnabled || isDoubleShiftEnabled) && !isControlKey(key)
+              ? key.toUpperCase()
+              : key.toLowerCase(),
+          style: TextStyle(
+            fontSize: customFontSize,
+            color: Color(0xff1B1B1D),
           ),
         ),
       ),
     );
   }
 
-  Widget buildNumKey(String key) {
-    return Expanded(
-      child: GestureDetector(
-        onPanDown: (details) => onKeyTap(key, details),
-        child: Container(
-          height: keyHeight, // Set the height of the key
-          alignment: Alignment.center,
-          margin: EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.black54),
-            color: Colors.grey[200],
+  Widget buildSpecialKey(List<List<String>> keys, String key) {
+    final double screenHeight =
+        widget.height?.toDouble() ?? MediaQuery.of(context).size.height;
+    final double screenWidth =
+        widget.width?.toDouble() ?? MediaQuery.of(context).size.width;
+    final double exHeight = 892.0;
+    final double exWidth = 412.0;
+    double keyWidth = screenWidth * 55.0 / exWidth;
+    double customFontSize = 22.0 / exHeight * screenHeight;
+    if (key == " ") {
+      keyWidth = screenWidth * 150.0 / exWidth;
+    } else if (key == "1/2" || key == "2/2") {
+      keyWidth = screenWidth * 0.2;
+      customFontSize = 20.0 / exHeight * screenHeight;
+    } else if (key == "←") {
+      keyWidth = screenWidth * 89.0 / exWidth;
+    } else if (key == "123" || key == "#?!" || key == "abc") {
+      keyWidth = screenWidth * 64.0 / exWidth;
+    } else if (key == "⏎") {
+      keyWidth = screenWidth * 100.0 / exWidth;
+    } else if (key == "◂" || key == "▸") {
+      keyWidth = screenWidth * 45.0 / exWidth;
+      customFontSize = screenHeight * 30.0 / exHeight;
+    }
+
+    return GestureDetector(
+      onPanDown: (details) => onKeyTap(key, details),
+      child: Container(
+        width: keyWidth,
+        height: getKeyHeight(keys),
+        alignment: Alignment.center,
+        margin: EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Color(0xffE0EAF9),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          key,
+          style: TextStyle(
+            fontSize: customFontSize,
+            color: Color(0xff1B1B1D),
           ),
-          child: Text(
-            ((isShiftEnabled || isDoubleShiftEnabled) && !isControlKey(key))
-                ? key.toUpperCase()
-                : key.toLowerCase(),
-            style: TextStyle(fontSize: 28),
+        ),
+      ),
+    );
+  }
+
+  Widget buildNumKey(List<List<String>> keys, String key) {
+    final double screenHeight =
+        widget.height?.toDouble() ?? MediaQuery.of(context).size.height;
+    final double screenWidth =
+        widget.width?.toDouble() ?? MediaQuery.of(context).size.width;
+
+    final double exHeight = 892.0;
+    final double exWidth = 412.0;
+
+    double keyWidth = screenWidth * 95.67 / exWidth;
+    double customFontSize = 0.03363228699 * screenHeight;
+    EdgeInsets margin = EdgeInsets.all(2);
+
+    if (key == "123" ||
+        key == "#?!" ||
+        key == "abc" ||
+        key == "◂" ||
+        key == "▸") {
+      keyWidth = screenWidth * 0.2;
+      customFontSize = 22.0 / exHeight * screenHeight;
+    }
+
+    if (key == "◂" || key == "▸") {
+      customFontSize = 0.04242152466 * screenHeight;
+    }
+
+    if (numKeys[numKeys.length - 1].contains(key)) {
+      if (numKeys[numKeys.length - 1][0] == key ||
+          numKeys[numKeys.length - 1][numKeys[numKeys.length - 1].length - 1] ==
+              key) {
+        margin = EdgeInsets.symmetric(horizontal: 0, vertical: 2);
+      } else {
+        margin = EdgeInsets.all(2);
+      }
+    }
+
+    return GestureDetector(
+      onPanDown: (details) => onKeyTap(key, details),
+      child: Container(
+        width: keyWidth,
+        height: getKeyHeight(keys),
+        alignment: Alignment.center,
+        margin: margin,
+        decoration: BoxDecoration(
+          color: Color(0xffE0EAF9),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          key,
+          style: TextStyle(
+            fontSize: customFontSize,
+            fontWeight: key == "↑" ? FontWeight.bold : FontWeight.normal,
+            color: Color(0xff1B1B1D),
           ),
         ),
       ),
@@ -532,10 +666,15 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   Widget build(BuildContext context) {
     final double screenHeight =
         widget.height?.toDouble() ?? MediaQuery.of(context).size.height;
-    final double keyboardHeight = isKeyboardVisible
-        ? (screenHeight * 0.5)
-        : 0; // Keyboard occupies 50% of screen
+    final double screenWidth =
+        widget.width?.toDouble() ?? MediaQuery.of(context).size.width;
+
+    final double exHeight = 892.0;
+    final double exWidth = 412.0;
     final double navBarHeight = screenHeight * 0.065;
+
+    keyboardHeight = isKeyboardVisible ? (screenHeight * 350.0 / exHeight) : 0;
+
     final textFieldHeight = screenHeight -
         keyboardHeight -
         navBarHeight -
@@ -548,7 +687,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
-            color: Colors.white, // You can change the background color
+            color: Colors.white,
             boxShadow: [
               BoxShadow(
                 color: Colors.grey.withOpacity(0.5),
@@ -577,10 +716,9 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                     'Keyboard',
                     style: TextStyle(
                       fontSize: 23.0,
-                      fontWeight: FontWeight.w500, // Semi-bold font weight
-                      // Add other styling properties if needed
+                      fontWeight: FontWeight.w500,
                     ),
-                  ), // The separated text
+                  ),
                 ],
               ),
               SizedBox(width: 38),
@@ -599,18 +737,17 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                 ),
                 style: TextButton.styleFrom(
                   backgroundColor: Color(0xff4285F4),
-                  foregroundColor: Colors.white, // Text color
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10), // Rounded corners
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 18), // Thicker button
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 ),
               ),
-              SizedBox(width: 3), // Add some spacing if needed
+              SizedBox(width: 3),
               IconButton(
                 icon: Icon(Icons.settings),
-                iconSize: 30.0, // Size of the settings icon
+                iconSize: 30.0,
                 onPressed: () {
                   // Navigate to settings page here
                 },
@@ -639,6 +776,9 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                 // Prevent the default keyboard from appearing
                 textFocusNode.canRequestFocus = false;
               },
+              style: TextStyle(
+                fontSize: 20,
+              ),
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
                 labelText: 'Input Text',
@@ -655,7 +795,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             margin: EdgeInsets.symmetric(horizontal: 6.0),
             decoration: BoxDecoration(
               color: Color(0xff4285F4),
-              borderRadius: BorderRadius.circular(10), // Rounded corners
+              borderRadius: BorderRadius.circular(10),
             ),
             alignment: Alignment.center,
             child: Text(
@@ -674,10 +814,15 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                   controller: scrollController,
                   itemCount: keys.length,
                   itemBuilder: (context, index) {
+                    bool isLastRow = (index == keys.length - 1) ||
+                        (index == keys.length - 2);
                     return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children:
-                          keys[index].map((key) => buildKey(key)).toList(),
+                      mainAxisAlignment: isLastRow
+                          ? MainAxisAlignment.spaceEvenly
+                          : MainAxisAlignment.center,
+                      children: keys[index]
+                          .map((key) => buildKey(keys, key))
+                          .toList(),
                     );
                   },
                 ),
@@ -691,10 +836,14 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                   controller: scrollController,
                   itemCount: numKeys.length,
                   itemBuilder: (context, index) {
+                    bool isLastRow = (index == numKeys.length - 1);
                     return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children:
-                          numKeys[index].map((key) => buildKey(key)).toList(),
+                      mainAxisAlignment: isLastRow
+                          ? MainAxisAlignment.spaceEvenly
+                          : MainAxisAlignment.center,
+                      children: numKeys[index]
+                          .map((key) => buildNumKey(numKeys, key))
+                          .toList(),
                     );
                   },
                 ),
@@ -708,10 +857,14 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                   controller: scrollController,
                   itemCount: firstSpecialKeys.length,
                   itemBuilder: (context, index) {
+                    bool isLastRow = (index == firstSpecialKeys.length - 1) ||
+                        (index == firstSpecialKeys.length - 2);
                     return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: isLastRow
+                          ? MainAxisAlignment.spaceEvenly
+                          : MainAxisAlignment.center,
                       children: firstSpecialKeys[index]
-                          .map((key) => buildKey(key))
+                          .map((key) => buildSpecialKey(firstSpecialKeys, key))
                           .toList(),
                     );
                   },
@@ -726,10 +879,14 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                   controller: scrollController,
                   itemCount: secSpecialKeys.length,
                   itemBuilder: (context, index) {
+                    bool isLastRow = (index == secSpecialKeys.length - 1) ||
+                        (index == secSpecialKeys.length - 2);
                     return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: isLastRow
+                          ? MainAxisAlignment.spaceEvenly
+                          : MainAxisAlignment.center,
                       children: secSpecialKeys[index]
-                          .map((key) => buildKey(key))
+                          .map((key) => buildKey(secSpecialKeys, key))
                           .toList(),
                     );
                   },
@@ -744,7 +901,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
     ["Z", "X", "C", "V", "B", "N", "M"],
     ["↑", " ", ".", "←"],
-    ["123", "#?!", "⏎", "◂", "▸"]
+    ["#?!", "123", "⏎", "◂", "▸"]
   ];
   List<List<String>> numKeys = [
     ["1", "2", "3", "-"],
