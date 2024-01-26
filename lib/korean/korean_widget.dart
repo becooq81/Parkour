@@ -10,7 +10,7 @@ class KoreanWidget extends StatefulWidget {
   const KoreanWidget({super.key});
 
   @override
-  _KoreanWidgetState createState() => _KoreanWidgetState();
+  State<KoreanWidget> createState() => _KoreanWidgetState();
 }
 
 class _KoreanWidgetState extends State<KoreanWidget> {
