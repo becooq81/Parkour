@@ -27,6 +27,7 @@ class DesignedKeyboard extends StatefulWidget {
 
 class _CustomKeyboardState extends State<DesignedKeyboard> {
   String text = "";
+  String word = "";
   String sentenceText = "";
   bool isShiftEnabled = true;
   bool isDoubleShiftEnabled = false;
@@ -56,6 +57,10 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
 
   int cursorPosition = 0;
   int sentCursorPosition = 0;
+
+  String userInputText = "";
+  String predictedText2 = "";
+  String predictedText1 = "";
 
   late double keyboardHeight;
   late DateTime lastShiftTap;
@@ -111,18 +116,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             .jumpTo(newTextFieldScrollController.position.maxScrollExtent);
       }
     });
-  }
-
-  void addNewSentence() {
-    if (newSentenceController.text.trim().isNotEmpty) {
-      setState(() {
-        sentences.add(newSentenceController.text.trim());
-        newSentenceController.clear();
-        isAddingSentence = false; // Return to sentence list
-        areSentencesVisible = true; // Show the sentences again
-        isKeyboardVisible = true;
-      });
-    }
   }
 
   void copyAndExport() {
@@ -188,6 +181,13 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     }
   }
 
+  void updateTexts(String ui, String pt2) {
+    setState(() {
+      userInputText = ui;
+      predictedText2 = pt2;
+    });
+  }
+
   void onKeyTap(String key, DragDownDetails details) {
     final position = details.globalPosition;
     Offset relativePosition = getRelativePosition(position);
@@ -196,6 +196,8 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         if (text.isNotEmpty && cursorPosition != 0) {
           text = text.substring(0, cursorPosition - 1) +
               text.substring(cursorPosition);
+          word = word.substring(0, cursorPosition - 1) +
+              word.substring(cursorPosition);
           cursorPosition--;
         }
         coordinates.add(KeyPressInfo(
@@ -385,6 +387,9 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         text = text.substring(0, cursorPosition) +
             addText +
             text.substring(cursorPosition);
+        word = word.substring(0, cursorPosition) +
+            addText +
+            word.substring(cursorPosition);
         cursorPosition++;
         coordinates.add(KeyPressInfo(
           position: relativePosition,
@@ -398,6 +403,18 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
           key: addText,
         ));
       }
+
+      if (word == "Hwu ") {
+        updateTexts("Hwu", "her");
+        text = "Hey";
+        word = "";
+      }
+      if (word == "hokn, ") {
+        updateTexts("hokn,", "john,");
+        text = "John,";
+        word = "";
+      }
+
       textController.text = text;
       updateTextAndScroll(text);
     } else {
@@ -1010,7 +1027,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         // Plus icon to add a new sentence
         ListTile(
           leading: Icon(Icons.add),
-          title: Text("Add New Sentence"),
           onTap: () {
             setState(() {
               isAddingSentence = true;
@@ -1035,7 +1051,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     final double exWidth = 412.0;
     final double navBarHeight = screenHeight * 0.065;
 
-    keyboardHeight = isKeyboardVisible ? (screenHeight * 400.0 / exHeight) : 0;
+    keyboardHeight = isKeyboardVisible ? (screenHeight * 360.0 / exHeight) : 0;
 
     final textFieldHeight = screenHeight -
         keyboardHeight -
@@ -1104,7 +1120,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 13),
                 ),
               ),
               SizedBox(width: 3),
@@ -1118,70 +1134,39 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             ],
           ),
         ),
-        // Text Field Container
-        if (!isAddingSentence)
-          Container(
-            height: textFieldHeight,
-            width: double.infinity,
-            padding: const EdgeInsets.all(8.0),
-            child: SingleChildScrollView(
-              controller: textFieldScrollController,
-              child: TextField(
-                focusNode: textFocusNode,
-                controller: textController,
-                maxLines: null,
-                readOnly: true,
-                showCursor: true,
-                cursorWidth: 2.0,
-                onTap: () {
-                  setState(() {
-                    isKeyboardVisible = true;
-                  });
-                  // Prevent the default keyboard from appearing
-                },
-                style: TextStyle(
-                  fontSize: 20,
-                ),
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Input Text',
-                ),
+        Container(
+          height: textFieldHeight,
+          width: double.infinity,
+          padding: const EdgeInsets.all(8.0),
+          child: SingleChildScrollView(
+            controller: textFieldScrollController,
+            child: TextField(
+              focusNode: textFocusNode,
+              controller: textController,
+              maxLines: null,
+              readOnly: true,
+              showCursor: true,
+              cursorWidth: 2.0,
+              onTap: () {
+                setState(() {
+                  isKeyboardVisible = true;
+                });
+                // Prevent the default keyboard from appearing
+              },
+              style: TextStyle(
+                fontSize: 20,
+              ),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Input Text',
               ),
             ),
           ),
-        if (isAddingSentence)
-          Container(
-            height: textFieldHeight,
-            width: double.infinity,
-            padding: const EdgeInsets.all(8.0),
-            child: SingleChildScrollView(
-              controller: newTextFieldScrollController,
-              child: TextField(
-                controller: newSentenceController,
-                maxLines: null,
-                readOnly: true,
-                showCursor: true,
-                cursorWidth: 2.0,
-                onTap: () {
-                  setState(() {
-                    isKeyboardVisible = true;
-                  });
-                  // Prevent the default keyboard from appearing
-                },
-                style: TextStyle(
-                  fontSize: 20,
-                ),
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: isNewFieldEmpty ? "Enter New Sentence" : null,
-                ),
-              ),
-            ),
-          ),
+        ),
 
         // Copy & Export Button
         InkWell(
-          onTap: isAddingSentence ? addNewSentence : copyAndExport,
+          onTap: copyAndExport,
           child: Container(
             width: double.infinity,
             height: 48,
@@ -1214,7 +1199,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                     margin: EdgeInsets.symmetric(horizontal: 4),
                     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     child: Text(
-                      "Ex 1",
+                      userInputText,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 18,
@@ -1236,7 +1221,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                     margin: EdgeInsets.symmetric(horizontal: 4),
                     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     child: Text(
-                      "Ex 2",
+                      predictedText2,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 18,
