@@ -33,12 +33,12 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   bool isNumKeypad = false;
   bool isFirstSpecialKeypad = false;
   bool isSecSpecialKeypad = false;
+  bool areSentencesVisible = false;
   TextEditingController textController = TextEditingController();
   bool isKeyboardVisible = false;
   List<KeyPressInfo> coordinates = [];
   ScrollController scrollController = ScrollController();
   ScrollController textFieldScrollController = ScrollController();
-  FocusNode textFocusNode = FocusNode();
   int cursorPosition = 0;
 
   late double keyboardHeight;
@@ -497,6 +497,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
 
     double keyWidth = screenWidth * 30.0 / exWidth;
     double customFontSize = 22.0 / exHeight * screenHeight;
+    Color customColor = Color(0xffE0EAF9);
     if (key == " ") {
       keyWidth = screenWidth * 150.0 / exWidth;
     } else if (key == "↑") {
@@ -510,13 +511,19 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       keyWidth = screenWidth * 64.0 / exWidth;
     } else if (key == "⏎") {
       keyWidth = screenWidth * 100.0 / exWidth;
+      customColor = Color(0xffA6C8FF);
     } else if (key == "◂" || key == "▸") {
       keyWidth = screenWidth * 45.0 / exWidth;
       customFontSize = screenHeight * 30.0 / exHeight;
+      customColor = Color(0xffA6C8FF);
     } else if (keys[1].contains(key)) {
       keyWidth = screenWidth * 34.0 / exWidth;
     } else if (keys[2].contains(key)) {
       keyWidth = screenWidth * 37.0 / exWidth;
+    }
+
+    if (key == "#?!") {
+      customColor = Color(0xffBDC6DC);
     }
 
     return GestureDetector(
@@ -527,7 +534,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         alignment: Alignment.center,
         margin: EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: Color(0xffE0EAF9),
+          color: customColor,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
@@ -550,8 +557,11 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         widget.width?.toDouble() ?? MediaQuery.of(context).size.width;
     final double exHeight = 892.0;
     final double exWidth = 412.0;
+
     double keyWidth = screenWidth * 55.0 / exWidth;
     double customFontSize = 22.0 / exHeight * screenHeight;
+    Color customColor = Color(0xffE0EAF9);
+
     if (key == " ") {
       keyWidth = screenWidth * 150.0 / exWidth;
     } else if (key == "1/2" || key == "2/2") {
@@ -563,9 +573,15 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       keyWidth = screenWidth * 64.0 / exWidth;
     } else if (key == "⏎") {
       keyWidth = screenWidth * 100.0 / exWidth;
+      customColor = Color(0xffA6C8FF);
     } else if (key == "◂" || key == "▸") {
       keyWidth = screenWidth * 45.0 / exWidth;
+      customColor = Color(0xffA6C8FF);
       customFontSize = screenHeight * 30.0 / exHeight;
+    }
+
+    if (key == "abc") {
+      customColor = Color(0xffBDC6DC);
     }
 
     return GestureDetector(
@@ -576,7 +592,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         alignment: Alignment.center,
         margin: EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: Color(0xffE0EAF9),
+          color: customColor,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
@@ -602,6 +618,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     double keyWidth = screenWidth * 95.67 / exWidth;
     double customFontSize = 0.03363228699 * screenHeight;
     EdgeInsets margin = EdgeInsets.all(2);
+    Color customColor = Color(0xffE0EAF9);
 
     if (key == "123" ||
         key == "#?!" ||
@@ -614,6 +631,12 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
 
     if (key == "◂" || key == "▸") {
       customFontSize = 0.04242152466 * screenHeight;
+    }
+
+    if (key == "-" || key == "␣" || key == "←") {
+      customColor = Color(0xffD7D9DF);
+    } else if (key == "⏎" || key == "◂" || key == "▸") {
+      customColor = Color(0xffA6C8FF);
     }
 
     if (numKeys[numKeys.length - 1].contains(key)) {
@@ -634,7 +657,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         alignment: Alignment.center,
         margin: margin,
         decoration: BoxDecoration(
-          color: Color(0xffE0EAF9),
+          color: customColor,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
@@ -662,6 +685,45 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
         key == "2/2";
   }
 
+  void insertText(String newText) {
+    setState(() {
+      // Insert new text at the current cursor position
+      text = text.substring(0, cursorPosition) +
+          newText +
+          text.substring(cursorPosition);
+      // Update cursor position
+      cursorPosition += newText.length;
+      textController.text = text; // Update the text controller
+    });
+    // Ensure the text field scrolls to the new cursor position
+    textController.selection =
+        TextSelection.fromPosition(TextPosition(offset: cursorPosition));
+  }
+
+  Widget buildFrequentlyUsedSentences() {
+    List<String> sentences = [
+      "Please call me.",
+      "I'm at home",
+      "I'm at hospital.",
+      // ... add more sentences ...
+    ];
+
+    return ListView(
+      children: sentences
+          .map((sentence) => ListTile(
+                title: Text(sentence),
+                onTap: () {
+                  insertText(sentence + " ");
+                  setState(() {
+                    areSentencesVisible = false;
+                    isAlphabetKeypad = true;
+                  });
+                },
+              ))
+          .toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenHeight =
@@ -673,7 +735,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     final double exWidth = 412.0;
     final double navBarHeight = screenHeight * 0.065;
 
-    keyboardHeight = isKeyboardVisible ? (screenHeight * 350.0 / exHeight) : 0;
+    keyboardHeight = isKeyboardVisible ? (screenHeight * 400.0 / exHeight) : 0;
 
     final textFieldHeight = screenHeight -
         keyboardHeight -
@@ -764,7 +826,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             controller: textFieldScrollController,
             child: TextField(
               controller: textController,
-              focusNode: textFocusNode,
               maxLines: null,
               readOnly: true,
               showCursor: true,
@@ -774,7 +835,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                   isKeyboardVisible = true;
                 });
                 // Prevent the default keyboard from appearing
-                textFocusNode.canRequestFocus = false;
               },
               style: TextStyle(
                 fontSize: 20,
@@ -804,6 +864,97 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             ),
           ),
         ),
+        // Predicted text + Quick Sentence + Mic
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 1),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xff575E71), // Background color
+                    borderRadius: BorderRadius.circular(6), // Rounded corners
+                  ),
+                  margin: EdgeInsets.symmetric(horizontal: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  child: Text(
+                    "Ex 1",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 1),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xff575E71),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  margin: EdgeInsets.symmetric(horizontal: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  child: Text(
+                    "Ex 2",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    areSentencesVisible =
+                        !areSentencesVisible; // Toggle the state
+                    if (areSentencesVisible) {
+                      isKeyboardVisible = true;
+                      isNumKeypad = false;
+                      isAlphabetKeypad = false;
+                      isFirstSpecialKeypad = false;
+                      isSecSpecialKeypad = false;
+                    }
+                  });
+                },
+                child: Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: areSentencesVisible
+                        ? Color(0xff575E71)
+                        : Color(0xffE0EAF9),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(Icons.menu,
+                      color: areSentencesVisible ? Colors.black : Colors.white),
+                ),
+              ),
+              SizedBox(width: 2),
+              GestureDetector(
+                onTap: () {
+                  // Handle mic icon tap
+                },
+                child: Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Color(0xffE0EAF9),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(Icons.mic),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Quick sentences
+        if (isKeyboardVisible && areSentencesVisible)
+          Expanded(child: buildFrequentlyUsedSentences()),
+
         // Keyboard
         if (isKeyboardVisible && isAlphabetKeypad)
           SizedBox(
