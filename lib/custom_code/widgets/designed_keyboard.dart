@@ -769,9 +769,9 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
 
     if (isKeyboardVisible) {
       if (isNumKeypad) {
-        return 51 / exHeight * screenHeight;
+        return 46 / exHeight * screenHeight;
       } else {
-        return 42 / exHeight * screenHeight;
+        return 40 / exHeight * screenHeight;
       }
     } else {
       return 0;
@@ -1036,9 +1036,6 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     final double navBarHeight = screenHeight * 0.065;
 
     keyboardHeight = isKeyboardVisible ? (screenHeight * 400.0 / exHeight) : 0;
-    if (isKeyboardVisible && isAddingSentence) {
-      keyboardHeight = screenHeight * 460.0 / exHeight;
-    }
 
     final textFieldHeight = screenHeight -
         keyboardHeight -
