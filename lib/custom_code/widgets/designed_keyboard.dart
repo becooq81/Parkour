@@ -27,6 +27,7 @@ class DesignedKeyboard extends StatefulWidget {
 
 class _CustomKeyboardState extends State<DesignedKeyboard> {
   String text = "";
+  String sentenceText = "";
   bool isShiftEnabled = true;
   bool isDoubleShiftEnabled = false;
   bool isAlphabetKeypad = true;
@@ -34,12 +35,26 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   bool isFirstSpecialKeypad = false;
   bool isSecSpecialKeypad = false;
   bool areSentencesVisible = false;
-  TextEditingController textController = TextEditingController();
+  bool isAddingSentence = false;
   bool isKeyboardVisible = false;
+  bool isNewFieldEmpty = true;
+
+  List<String> sentences = [
+    "Please call me.",
+    "I'm at home",
+    "I'm at hospital.",
+    // ... add more sentences ...
+  ];
+
+  TextEditingController textController = TextEditingController();
   List<KeyPressInfo> coordinates = [];
   ScrollController scrollController = ScrollController();
   ScrollController textFieldScrollController = ScrollController();
+  ScrollController newTextFieldScrollController = ScrollController();
+  TextEditingController newSentenceController = TextEditingController();
+
   int cursorPosition = 0;
+  int sentCursorPosition = 0;
 
   late double keyboardHeight;
   late DateTime lastShiftTap;
@@ -53,6 +68,11 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     scrollController = ScrollController();
     textFieldScrollController = ScrollController();
     lastShiftTap = DateTime.now();
+    newSentenceController.addListener(() {
+      setState(() {
+        isNewFieldEmpty = newSentenceController.text.isEmpty;
+      });
+    });
   }
 
   @override
@@ -60,6 +80,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     textController.dispose();
     scrollController.dispose();
     textFieldScrollController.dispose();
+    newTextFieldScrollController.dispose();
     super.dispose();
   }
 
@@ -77,11 +98,36 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     });
   }
 
+  void updateNewTextAndScroll(String newText) {
+    setState(() {
+      sentenceText = newText;
+      newSentenceController.text = text;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (newTextFieldScrollController.hasClients) {
+        newTextFieldScrollController
+            .jumpTo(newTextFieldScrollController.position.maxScrollExtent);
+      }
+    });
+  }
+
+  void addNewSentence() {
+    if (newSentenceController.text.trim().isNotEmpty) {
+      setState(() {
+        sentences.add(newSentenceController.text.trim());
+        newSentenceController.clear();
+        isAddingSentence = false; // Return to sentence list
+        areSentencesVisible = true; // Show the sentences again
+        isKeyboardVisible = true;
+      });
+    }
+  }
+
   void copyAndExport() {
     Clipboard.setData(ClipboardData(text: text));
     exportCoordinatesToCSV();
     exportKeyCoordinatesToCSV();
-    sendEmailWithCsvs(keyCoordinatesCSV, inputCoordinatesCSV);
+    //sendEmailWithCsvs(keyCoordinatesCSV, inputCoordinatesCSV);
     setState(() {
       isKeyboardVisible = false; // Hide the keyboard
     });
@@ -143,201 +189,409 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   void onKeyTap(String key, DragDownDetails details) {
     final position = details.globalPosition;
     Offset relativePosition = getRelativePosition(position);
-    if (key == "←") {
-      if (text.isNotEmpty && cursorPosition != 0) {
-        text = text.substring(0, cursorPosition - 1) +
-            text.substring(cursorPosition);
-        cursorPosition--;
-      }
-      coordinates.add(KeyPressInfo(
-        position: Offset(100000.0, 100000.0),
-        isShiftEnabled: isShiftEnabled,
-        isDoubleShiftEnabled: isDoubleShiftEnabled,
-        isAlphabetKeypad: isAlphabetKeypad,
-        isNumKeypad: isNumKeypad,
-        isFirstSpecialKeypad: isFirstSpecialKeypad,
-        isSecSpecialKeypad: isSecSpecialKeypad,
-        timestamp: DateTime.now(),
-        key: "BACKSPACE",
-      ));
-    } else if (key == "↑") {
-      if (isDoubleShiftEnabled) {
-        isDoubleShiftEnabled = false;
-        isShiftEnabled = false;
-      } else {
-        DateTime now = DateTime.now();
-        if (now.difference(lastShiftTap).inMilliseconds < 300) {
-          // Double tap detected
-          isDoubleShiftEnabled = true;
-        } else {
-          // Single tap or time between taps is too long
-          isDoubleShiftEnabled = false;
-          isShiftEnabled = !isShiftEnabled;
+    if (!isAddingSentence) {
+      if (key == "←") {
+        if (text.isNotEmpty && cursorPosition != 0) {
+          text = text.substring(0, cursorPosition - 1) +
+              text.substring(cursorPosition);
+          cursorPosition--;
         }
-        lastShiftTap = now;
+        coordinates.add(KeyPressInfo(
+          position: Offset(100000.0, 100000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "BACKSPACE",
+        ));
+      } else if (key == "↑") {
+        if (isDoubleShiftEnabled) {
+          isDoubleShiftEnabled = false;
+          isShiftEnabled = false;
+        } else {
+          DateTime now = DateTime.now();
+          if (now.difference(lastShiftTap).inMilliseconds < 300) {
+            // Double tap detected
+            isDoubleShiftEnabled = true;
+          } else {
+            // Single tap or time between taps is too long
+            isDoubleShiftEnabled = false;
+            isShiftEnabled = !isShiftEnabled;
+          }
+          lastShiftTap = now;
+        }
+        coordinates.add(KeyPressInfo(
+          position: Offset(200000.0, 200000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "SHIFT",
+        ));
+      } else if (key == " " || key == "␣") {
+        text = text.substring(0, cursorPosition) +
+            " " +
+            text.substring(cursorPosition);
+        cursorPosition++;
+        if (text.isNotEmpty && text.endsWith('.')) {
+          isShiftEnabled = true;
+        }
+        coordinates.add(KeyPressInfo(
+          position: Offset(400000.0, 400000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "SPACEBAR",
+        ));
+        sendCoordinatesToServer(coordinates);
+      } else if (key == "⏎") {
+        text = text.substring(0, cursorPosition) +
+            "\n" +
+            text.substring(cursorPosition);
+        cursorPosition++;
+        coordinates.add(KeyPressInfo(
+          position: Offset(300000.0, 300000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "ENTER",
+        ));
+      } else if (key == "◂") {
+        cursorPosition = max(0, cursorPosition - 1);
+        coordinates.add(KeyPressInfo(
+          position: Offset(500000.0, 500000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "MOVE CURSOR LEFT",
+        ));
+      } else if (key == "▸") {
+        cursorPosition = min(text.length, cursorPosition + 1);
+        coordinates.add(KeyPressInfo(
+          position: Offset(600000.0, 600000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "MOVE CURSOR RIGHT",
+        ));
+      } else if (key == "123") {
+        isNumKeypad = true;
+        isFirstSpecialKeypad = false;
+        isSecSpecialKeypad = false;
+        isAlphabetKeypad = false;
+        coordinates.add(KeyPressInfo(
+          position: Offset(700000.0, 700000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "CHANGE TO NUMKEYPAD",
+        ));
+      } else if (key == "abc") {
+        isNumKeypad = false;
+        isFirstSpecialKeypad = false;
+        isSecSpecialKeypad = false;
+        isAlphabetKeypad = true;
+        coordinates.add(KeyPressInfo(
+          position: Offset(800000.0, 800000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "CHANGE TO ALPHABET KEYPAD",
+        ));
+      } else if (key == "#?!" || key == "2/2") {
+        isNumKeypad = false;
+        isFirstSpecialKeypad = true;
+        isSecSpecialKeypad = false;
+        isAlphabetKeypad = false;
+        coordinates.add(KeyPressInfo(
+          position: Offset(900000.0, 900000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "CHANGE TO FIRST SPECIAL KEYPAD",
+        ));
+      } else if (key == "1/2") {
+        isNumKeypad = false;
+        isFirstSpecialKeypad = false;
+        isSecSpecialKeypad = true;
+        isAlphabetKeypad = false;
+        coordinates.add(KeyPressInfo(
+          position: Offset(1900000.0, 1900000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "CHANGE TO SECOND SPECIAL KEYPAD",
+        ));
+      } else {
+        String addText = (isShiftEnabled || isDoubleShiftEnabled)
+            ? key.toUpperCase()
+            : key.toLowerCase();
+        text = text.substring(0, cursorPosition) +
+            addText +
+            text.substring(cursorPosition);
+        cursorPosition++;
+        coordinates.add(KeyPressInfo(
+          position: relativePosition,
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: addText,
+        ));
       }
-      coordinates.add(KeyPressInfo(
-        position: Offset(200000.0, 200000.0),
-        isShiftEnabled: isShiftEnabled,
-        isDoubleShiftEnabled: isDoubleShiftEnabled,
-        isAlphabetKeypad: isAlphabetKeypad,
-        isNumKeypad: isNumKeypad,
-        isFirstSpecialKeypad: isFirstSpecialKeypad,
-        isSecSpecialKeypad: isSecSpecialKeypad,
-        timestamp: DateTime.now(),
-        key: "SHIFT",
-      ));
-    } else if (key == " " || key == "␣") {
-      text = text.substring(0, cursorPosition) +
-          " " +
-          text.substring(cursorPosition);
-      cursorPosition++;
-      if (text.isNotEmpty && text.endsWith('.')) {
-        isShiftEnabled = true;
-      }
-      coordinates.add(KeyPressInfo(
-        position: Offset(400000.0, 400000.0),
-        isShiftEnabled: isShiftEnabled,
-        isDoubleShiftEnabled: isDoubleShiftEnabled,
-        isAlphabetKeypad: isAlphabetKeypad,
-        isNumKeypad: isNumKeypad,
-        isFirstSpecialKeypad: isFirstSpecialKeypad,
-        isSecSpecialKeypad: isSecSpecialKeypad,
-        timestamp: DateTime.now(),
-        key: "SPACEBAR",
-      ));
-      sendCoordinatesToServer(coordinates);
-    } else if (key == "⏎") {
-      text = text.substring(0, cursorPosition) +
-          "\n" +
-          text.substring(cursorPosition);
-      cursorPosition++;
-      coordinates.add(KeyPressInfo(
-        position: Offset(300000.0, 300000.0),
-        isShiftEnabled: isShiftEnabled,
-        isDoubleShiftEnabled: isDoubleShiftEnabled,
-        isAlphabetKeypad: isAlphabetKeypad,
-        isNumKeypad: isNumKeypad,
-        isFirstSpecialKeypad: isFirstSpecialKeypad,
-        isSecSpecialKeypad: isSecSpecialKeypad,
-        timestamp: DateTime.now(),
-        key: "ENTER",
-      ));
-    } else if (key == "◂") {
-      cursorPosition = max(0, cursorPosition - 1);
-      coordinates.add(KeyPressInfo(
-        position: Offset(500000.0, 500000.0),
-        isShiftEnabled: isShiftEnabled,
-        isDoubleShiftEnabled: isDoubleShiftEnabled,
-        isAlphabetKeypad: isAlphabetKeypad,
-        isNumKeypad: isNumKeypad,
-        isFirstSpecialKeypad: isFirstSpecialKeypad,
-        isSecSpecialKeypad: isSecSpecialKeypad,
-        timestamp: DateTime.now(),
-        key: "MOVE CURSOR LEFT",
-      ));
-    } else if (key == "▸") {
-      cursorPosition = min(text.length, cursorPosition + 1);
-      coordinates.add(KeyPressInfo(
-        position: Offset(600000.0, 600000.0),
-        isShiftEnabled: isShiftEnabled,
-        isDoubleShiftEnabled: isDoubleShiftEnabled,
-        isAlphabetKeypad: isAlphabetKeypad,
-        isNumKeypad: isNumKeypad,
-        isFirstSpecialKeypad: isFirstSpecialKeypad,
-        isSecSpecialKeypad: isSecSpecialKeypad,
-        timestamp: DateTime.now(),
-        key: "MOVE CURSOR RIGHT",
-      ));
-    } else if (key == "123") {
-      isNumKeypad = true;
-      isFirstSpecialKeypad = false;
-      isSecSpecialKeypad = false;
-      isAlphabetKeypad = false;
-      coordinates.add(KeyPressInfo(
-        position: Offset(700000.0, 700000.0),
-        isShiftEnabled: isShiftEnabled,
-        isDoubleShiftEnabled: isDoubleShiftEnabled,
-        isAlphabetKeypad: isAlphabetKeypad,
-        isNumKeypad: isNumKeypad,
-        isFirstSpecialKeypad: isFirstSpecialKeypad,
-        isSecSpecialKeypad: isSecSpecialKeypad,
-        timestamp: DateTime.now(),
-        key: "CHANGE TO NUMKEYPAD",
-      ));
-    } else if (key == "abc") {
-      isNumKeypad = false;
-      isFirstSpecialKeypad = false;
-      isSecSpecialKeypad = false;
-      isAlphabetKeypad = true;
-      coordinates.add(KeyPressInfo(
-        position: Offset(800000.0, 800000.0),
-        isShiftEnabled: isShiftEnabled,
-        isDoubleShiftEnabled: isDoubleShiftEnabled,
-        isAlphabetKeypad: isAlphabetKeypad,
-        isNumKeypad: isNumKeypad,
-        isFirstSpecialKeypad: isFirstSpecialKeypad,
-        isSecSpecialKeypad: isSecSpecialKeypad,
-        timestamp: DateTime.now(),
-        key: "CHANGE TO ALPHABET KEYPAD",
-      ));
-    } else if (key == "#?!" || key == "2/2") {
-      isNumKeypad = false;
-      isFirstSpecialKeypad = true;
-      isSecSpecialKeypad = false;
-      isAlphabetKeypad = false;
-      coordinates.add(KeyPressInfo(
-        position: Offset(900000.0, 900000.0),
-        isShiftEnabled: isShiftEnabled,
-        isDoubleShiftEnabled: isDoubleShiftEnabled,
-        isAlphabetKeypad: isAlphabetKeypad,
-        isNumKeypad: isNumKeypad,
-        isFirstSpecialKeypad: isFirstSpecialKeypad,
-        isSecSpecialKeypad: isSecSpecialKeypad,
-        timestamp: DateTime.now(),
-        key: "CHANGE TO FIRST SPECIAL KEYPAD",
-      ));
-    } else if (key == "1/2") {
-      isNumKeypad = false;
-      isFirstSpecialKeypad = false;
-      isSecSpecialKeypad = true;
-      isAlphabetKeypad = false;
-      coordinates.add(KeyPressInfo(
-        position: Offset(1900000.0, 1900000.0),
-        isShiftEnabled: isShiftEnabled,
-        isDoubleShiftEnabled: isDoubleShiftEnabled,
-        isAlphabetKeypad: isAlphabetKeypad,
-        isNumKeypad: isNumKeypad,
-        isFirstSpecialKeypad: isFirstSpecialKeypad,
-        isSecSpecialKeypad: isSecSpecialKeypad,
-        timestamp: DateTime.now(),
-        key: "CHANGE TO SECOND SPECIAL KEYPAD",
-      ));
+      textController.text = text;
+      updateTextAndScroll(text);
     } else {
-      String addText = (isShiftEnabled || isDoubleShiftEnabled)
-          ? key.toUpperCase()
-          : key.toLowerCase();
-      text = text.substring(0, cursorPosition) +
-          addText +
-          text.substring(cursorPosition);
-      cursorPosition++;
-      coordinates.add(KeyPressInfo(
-        position: relativePosition,
-        isShiftEnabled: isShiftEnabled,
-        isDoubleShiftEnabled: isDoubleShiftEnabled,
-        isAlphabetKeypad: isAlphabetKeypad,
-        isNumKeypad: isNumKeypad,
-        isFirstSpecialKeypad: isFirstSpecialKeypad,
-        isSecSpecialKeypad: isSecSpecialKeypad,
-        timestamp: DateTime.now(),
-        key: addText,
-      ));
+      if (key == "←") {
+        if (sentenceText.isNotEmpty && sentCursorPosition != 0) {
+          sentenceText = sentenceText.substring(0, sentCursorPosition - 1) +
+              sentenceText.substring(sentCursorPosition);
+          sentCursorPosition--;
+        }
+        coordinates.add(KeyPressInfo(
+          position: Offset(100000.0, 100000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "BACKSPACE",
+        ));
+      } else if (key == "↑") {
+        if (isDoubleShiftEnabled) {
+          isDoubleShiftEnabled = false;
+          isShiftEnabled = false;
+        } else {
+          DateTime now = DateTime.now();
+          if (now.difference(lastShiftTap).inMilliseconds < 300) {
+            // Double tap detected
+            isDoubleShiftEnabled = true;
+          } else {
+            // Single tap or time between taps is too long
+            isDoubleShiftEnabled = false;
+            isShiftEnabled = !isShiftEnabled;
+          }
+          lastShiftTap = now;
+        }
+        coordinates.add(KeyPressInfo(
+          position: Offset(200000.0, 200000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "SHIFT",
+        ));
+      } else if (key == " " || key == "␣") {
+        sentenceText = sentenceText.substring(0, sentCursorPosition) +
+            " " +
+            sentenceText.substring(sentCursorPosition);
+        sentCursorPosition++;
+        if (sentenceText.isNotEmpty && sentenceText.endsWith('.')) {
+          isShiftEnabled = true;
+        }
+        coordinates.add(KeyPressInfo(
+          position: Offset(400000.0, 400000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "SPACEBAR",
+        ));
+        sendCoordinatesToServer(coordinates);
+      } else if (key == "⏎") {
+        sentenceText = sentenceText.substring(0, sentCursorPosition) +
+            "\n" +
+            sentenceText.substring(sentCursorPosition);
+        sentCursorPosition++;
+
+        coordinates.add(KeyPressInfo(
+          position: Offset(300000.0, 300000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "ENTER",
+        ));
+        sendCoordinatesToServer(coordinates);
+      } else if (key == "◂") {
+        sentCursorPosition = max(0, sentCursorPosition - 1);
+        coordinates.add(KeyPressInfo(
+          position: Offset(500000.0, 500000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "MOVE CURSOR LEFT",
+        ));
+      } else if (key == "▸") {
+        sentCursorPosition = min(sentenceText.length, sentCursorPosition + 1);
+        coordinates.add(KeyPressInfo(
+          position: Offset(600000.0, 600000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "MOVE CURSOR RIGHT",
+        ));
+      } else if (key == "123") {
+        isNumKeypad = true;
+        isFirstSpecialKeypad = false;
+        isSecSpecialKeypad = false;
+        isAlphabetKeypad = false;
+        coordinates.add(KeyPressInfo(
+          position: Offset(700000.0, 700000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "CHANGE TO NUMKEYPAD",
+        ));
+      } else if (key == "abc") {
+        isNumKeypad = false;
+        isFirstSpecialKeypad = false;
+        isSecSpecialKeypad = false;
+        isAlphabetKeypad = true;
+        coordinates.add(KeyPressInfo(
+          position: Offset(800000.0, 800000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "CHANGE TO ALPHABET KEYPAD",
+        ));
+      } else if (key == "#?!" || key == "2/2") {
+        isNumKeypad = false;
+        isFirstSpecialKeypad = true;
+        isSecSpecialKeypad = false;
+        isAlphabetKeypad = false;
+        coordinates.add(KeyPressInfo(
+          position: Offset(900000.0, 900000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "CHANGE TO FIRST SPECIAL KEYPAD",
+        ));
+      } else if (key == "1/2") {
+        isNumKeypad = false;
+        isFirstSpecialKeypad = false;
+        isSecSpecialKeypad = true;
+        isAlphabetKeypad = false;
+        coordinates.add(KeyPressInfo(
+          position: Offset(1900000.0, 1900000.0),
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: "CHANGE TO SECOND SPECIAL KEYPAD",
+        ));
+      } else {
+        String addText = (isShiftEnabled || isDoubleShiftEnabled)
+            ? key.toUpperCase()
+            : key.toLowerCase();
+        sentenceText = sentenceText.substring(0, sentCursorPosition) +
+            addText +
+            sentenceText.substring(sentCursorPosition);
+        sentCursorPosition++;
+        coordinates.add(KeyPressInfo(
+          position: relativePosition,
+          isShiftEnabled: isShiftEnabled,
+          isDoubleShiftEnabled: isDoubleShiftEnabled,
+          isAlphabetKeypad: isAlphabetKeypad,
+          isNumKeypad: isNumKeypad,
+          isFirstSpecialKeypad: isFirstSpecialKeypad,
+          isSecSpecialKeypad: isSecSpecialKeypad,
+          timestamp: DateTime.now(),
+          key: addText,
+        ));
+      }
+
+      newSentenceController.text = sentenceText;
+      updateNewTextAndScroll(sentenceText);
     }
-    updateTextAndScroll(text);
-    textController.text = text;
+
     if (isShiftEnabled && !isControlKey(key) && (!isDoubleShiftEnabled)) {
       isShiftEnabled = false;
     }
+
+    print("isKeyboardVisible: " + isKeyboardVisible.toString());
+    print("isAlphabetKeypad: " + isAlphabetKeypad.toString());
+    print("isNumKeypad: " + isNumKeypad.toString());
+    print("isFirstSpecialKeypad: " + isFirstSpecialKeypad.toString());
+    print("isSecondSpecialKeypad: " + isSecSpecialKeypad.toString());
+    print("areSentencesVisible: " + areSentencesVisible.toString());
+    print("isAddingSentence: " + isAddingSentence.toString());
+    print("isNewFieldEmpty: " + isNewFieldEmpty.toString());
   }
 
   Future<void> sendCoordinatesToServer(List<KeyPressInfo> keyPressInfos) async {
@@ -477,7 +731,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
 
     if (isKeyboardVisible) {
       if (isNumKeypad) {
-        return 58 / exHeight * screenHeight;
+        return 51 / exHeight * screenHeight;
       } else {
         return 42 / exHeight * screenHeight;
       }
@@ -616,17 +870,15 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     final double exWidth = 412.0;
 
     double keyWidth = screenWidth * 95.67 / exWidth;
+    double keyHeight = getKeyHeight(numKeys);
     double customFontSize = 0.03363228699 * screenHeight;
     EdgeInsets margin = EdgeInsets.all(2);
     Color customColor = Color(0xffE0EAF9);
 
-    if (key == "123" ||
-        key == "#?!" ||
-        key == "abc" ||
-        key == "◂" ||
-        key == "▸") {
+    if (key == "#?!" || key == "abc" || key == "◂" || key == "▸") {
       keyWidth = screenWidth * 0.2;
       customFontSize = 22.0 / exHeight * screenHeight;
+      keyHeight = 42 / exHeight * screenHeight;
     }
 
     if (key == "◂" || key == "▸") {
@@ -637,6 +889,8 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       customColor = Color(0xffD7D9DF);
     } else if (key == "⏎" || key == "◂" || key == "▸") {
       customColor = Color(0xffA6C8FF);
+    } else if (key == "#?!") {
+      customColor = Color(0xffBDC6DC);
     }
 
     if (numKeys[numKeys.length - 1].contains(key)) {
@@ -653,7 +907,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
       onPanDown: (details) => onKeyTap(key, details),
       child: Container(
         width: keyWidth,
-        height: getKeyHeight(keys),
+        height: keyHeight,
         alignment: Alignment.center,
         margin: margin,
         decoration: BoxDecoration(
@@ -701,26 +955,34 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   }
 
   Widget buildFrequentlyUsedSentences() {
-    List<String> sentences = [
-      "Please call me.",
-      "I'm at home",
-      "I'm at hospital.",
-      // ... add more sentences ...
-    ];
-
     return ListView(
-      children: sentences
-          .map((sentence) => ListTile(
-                title: Text(sentence),
-                onTap: () {
-                  insertText(sentence + " ");
-                  setState(() {
-                    areSentencesVisible = false;
-                    isAlphabetKeypad = true;
-                  });
-                },
-              ))
-          .toList(),
+      children: [
+        // Existing sentences
+        ...sentences.map((sentence) => ListTile(
+              title: Text(sentence),
+              onTap: () {
+                insertText(sentence + " ");
+                setState(() {
+                  isKeyboardVisible = true;
+                  areSentencesVisible = false;
+                  isAlphabetKeypad = true;
+                });
+              },
+            )),
+        // Plus icon to add a new sentence
+        ListTile(
+          leading: Icon(Icons.add),
+          title: Text("Add New Sentence"),
+          onTap: () {
+            setState(() {
+              isAddingSentence = true;
+              isKeyboardVisible = true;
+              areSentencesVisible = false;
+              isAlphabetKeypad = true;
+            });
+          },
+        ),
+      ],
     );
   }
 
@@ -736,6 +998,9 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
     final double navBarHeight = screenHeight * 0.065;
 
     keyboardHeight = isKeyboardVisible ? (screenHeight * 400.0 / exHeight) : 0;
+    if (isKeyboardVisible && isAddingSentence) {
+      keyboardHeight = screenHeight * 460.0 / exHeight;
+    }
 
     final textFieldHeight = screenHeight -
         keyboardHeight -
@@ -798,7 +1063,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                   ),
                 ),
                 style: TextButton.styleFrom(
-                  backgroundColor: Color(0xff4285F4),
+                  backgroundColor: Color(0xffBDC6DC),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -818,37 +1083,68 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
           ),
         ),
         // Text Field Container
-        Container(
-          height: textFieldHeight,
-          width: double.infinity,
-          padding: const EdgeInsets.all(8.0),
-          child: SingleChildScrollView(
-            controller: textFieldScrollController,
-            child: TextField(
-              controller: textController,
-              maxLines: null,
-              readOnly: true,
-              showCursor: true,
-              cursorWidth: 2.0,
-              onTap: () {
-                setState(() {
-                  isKeyboardVisible = true;
-                });
-                // Prevent the default keyboard from appearing
-              },
-              style: TextStyle(
-                fontSize: 20,
-              ),
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Input Text',
+        if (!isAddingSentence)
+          Container(
+            height: textFieldHeight,
+            width: double.infinity,
+            padding: const EdgeInsets.all(8.0),
+            child: SingleChildScrollView(
+              controller: textFieldScrollController,
+              child: TextField(
+                controller: textController,
+                maxLines: null,
+                readOnly: true,
+                showCursor: true,
+                cursorWidth: 2.0,
+                onTap: () {
+                  setState(() {
+                    isKeyboardVisible = true;
+                  });
+                  // Prevent the default keyboard from appearing
+                },
+                style: TextStyle(
+                  fontSize: 20,
+                ),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Input Text',
+                ),
               ),
             ),
           ),
-        ),
+        if (isAddingSentence)
+          Container(
+            height: textFieldHeight,
+            width: double.infinity,
+            padding: const EdgeInsets.all(8.0),
+            child: SingleChildScrollView(
+              controller: newTextFieldScrollController,
+              child: TextField(
+                controller: newSentenceController,
+                maxLines: null,
+                readOnly: true,
+                showCursor: true,
+                cursorWidth: 2.0,
+                onTap: () {
+                  setState(() {
+                    isKeyboardVisible = true;
+                  });
+                  // Prevent the default keyboard from appearing
+                },
+                style: TextStyle(
+                  fontSize: 20,
+                ),
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: isNewFieldEmpty ? "Enter New Sentence" : null,
+                ),
+              ),
+            ),
+          ),
+
         // Copy & Export Button
         InkWell(
-          onTap: copyAndExport,
+          onTap: isAddingSentence ? addNewSentence : copyAndExport,
           child: Container(
             width: double.infinity,
             height: 48,
@@ -859,7 +1155,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             ),
             alignment: Alignment.center,
             child: Text(
-              "Copy",
+              isAddingSentence ? "Add sentence" : "Copy",
               style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ),
@@ -871,38 +1167,44 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Color(0xff575E71), // Background color
-                    borderRadius: BorderRadius.circular(6), // Rounded corners
-                  ),
-                  margin: EdgeInsets.symmetric(horizontal: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  child: Text(
-                    "Ex 1",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white,
+                child: Visibility(
+                  visible: !areSentencesVisible,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xff575E71), // Background color
+                      borderRadius: BorderRadius.circular(6), // Rounded corners
+                    ),
+                    margin: EdgeInsets.symmetric(horizontal: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    child: Text(
+                      "Ex 1",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
               ),
               SizedBox(width: 1),
               Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Color(0xff575E71),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  margin: EdgeInsets.symmetric(horizontal: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  child: Text(
-                    "Ex 2",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white,
+                child: Visibility(
+                  visible: !areSentencesVisible,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xff575E71),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    margin: EdgeInsets.symmetric(horizontal: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    child: Text(
+                      "Ex 2",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -918,6 +1220,13 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                       isAlphabetKeypad = false;
                       isFirstSpecialKeypad = false;
                       isSecSpecialKeypad = false;
+                      buildFrequentlyUsedSentences();
+                    } else {
+                      isKeyboardVisible = true;
+                      isAlphabetKeypad = true;
+                      isNumKeypad = false;
+                      isFirstSpecialKeypad = false;
+                      isSecSpecialKeypad = false;
                     }
                   });
                 },
@@ -930,7 +1239,7 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(Icons.menu,
-                      color: areSentencesVisible ? Colors.black : Colors.white),
+                      color: areSentencesVisible ? Colors.white : Colors.black),
                 ),
               ),
               SizedBox(width: 2),
@@ -951,9 +1260,11 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
           ),
         ),
 
-        // Quick sentences
-        if (isKeyboardVisible && areSentencesVisible)
-          Expanded(child: buildFrequentlyUsedSentences()),
+        // Frequently Used Sentences List
+        if (areSentencesVisible && !isAddingSentence)
+          Expanded(
+            child: buildFrequentlyUsedSentences(),
+          ),
 
         // Keyboard
         if (isKeyboardVisible && isAlphabetKeypad)
@@ -1057,8 +1368,9 @@ class _CustomKeyboardState extends State<DesignedKeyboard> {
   List<List<String>> numKeys = [
     ["1", "2", "3", "-"],
     ["4", "5", "6", "␣"],
-    ["7", "8", "9", "⏎"],
-    ["abc", "#?!", "◂", "▸"]
+    ["7", "8", "9", "←"],
+    [",", "0", ".", "⏎"],
+    ["#?!", "abc", "◂", "▸"]
   ];
   List<List<String>> firstSpecialKeys = [
     ["+", "=", "/", "_", "(", ")"],
